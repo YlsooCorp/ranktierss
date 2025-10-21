@@ -27,6 +27,10 @@
       <p>Follow every bracket and cheer on your favorite competitors.</p>
     </section>
 
+    <% if (eventsError) { %>
+      <div class="notice error"><%= eventsError %></div>
+    <% } %>
+
     <section class="events-grid">
       <% if (events.length > 0) { %>
         <% events.forEach(event => { %>

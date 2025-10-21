@@ -161,6 +161,32 @@ function assignWinnerToNextMatch(bracket, match) {
   }
 }
 
+function normalizeBracketObject(maybeBracket) {
+  if (!maybeBracket || typeof maybeBracket !== "object") {
+    return { rounds: [] };
+  }
+
+  if (!Array.isArray(maybeBracket.rounds)) {
+    return { ...maybeBracket, rounds: [] };
+  }
+
+  return maybeBracket;
+}
+
+function parseBracket(rawBracket) {
+  if (typeof rawBracket === "string") {
+    try {
+      const parsed = JSON.parse(rawBracket);
+      return normalizeBracketObject(parsed);
+    } catch (error) {
+      console.error("Failed to parse bracket JSON", error);
+      return { rounds: [] };
+    }
+  }
+
+  return normalizeBracketObject(rawBracket);
+}
+
 function findMatch(bracket, matchId) {
   if (!bracket || !Array.isArray(bracket.rounds)) return null;
   for (const round of bracket.rounds) {
@@ -376,34 +402,62 @@ app.get("/privacy", (req, res) => {
 });
 
 app.get("/events", async (req, res) => {
-  const { data: events } = await supabase
-    .from("events")
-    .select("id, name, game, kit, created_at")
-    .order("created_at", { ascending: false });
+  let events = [];
+  let eventsError = null;
+
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select("id, name, game, kit, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    events = data || [];
+  } catch (error) {
+    console.error("Failed to load events", error);
+    eventsError = "Unable to load events right now. Please try again later.";
+  }
+
   res.render("events", {
-    events: events || [],
+    events,
+    eventsError,
     user: req.session.user || null,
   });
 });
 
 app.get("/events/:id", async (req, res) => {
   const eventId = req.params.id;
-  const { data: event } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
+  const { data: event, error: eventError } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
+  if (eventError) {
+    console.error("Failed to fetch event", eventError);
+    return res.status(500).send("Unable to load event.");
+  }
   if (!event) return res.status(404).send("Event not found");
 
-  const bracket = typeof event.bracket === "string" ? JSON.parse(event.bracket) : event.bracket || { rounds: [] };
-  const { data: records } = await supabase
+  const bracket = parseBracket(event.bracket);
+  let eventRecords = [];
+  let viewError = null;
+
+  const { data: records, error: recordsError } = await supabase
     .from("player_event_records")
     .select("player_id, wins, losses, players(username)")
     .eq("event_id", eventId);
+
+  if (recordsError) {
+    console.error("Failed to fetch event records", recordsError);
+    viewError = "Participant records are temporarily unavailable.";
+  } else if (records) {
+    eventRecords = records;
+  }
 
   res.render("event", {
     event,
     bracket,
     adminView: false,
-    records: records || [],
+    records: eventRecords,
     adminMessage: null,
     adminError: null,
+    eventError: viewError,
     user: req.session.user || null,
     admin: req.session.admin || null,
   });
@@ -629,11 +683,21 @@ app.get("/admin/events/:id", requireAdmin, async (req, res) => {
     return res.redirect("/admin/dashboard");
   }
 
-  const bracket = typeof event.bracket === "string" ? JSON.parse(event.bracket) : event.bracket || { rounds: [] };
-  const { data: records } = await supabase
+  const bracket = parseBracket(event.bracket);
+  let eventError = null;
+
+  const { data: records, error: recordsError } = await supabase
     .from("player_event_records")
     .select("player_id, wins, losses, players(username)")
     .eq("event_id", eventId);
+
+  let eventRecords = [];
+  if (recordsError) {
+    console.error("Failed to load event records", recordsError);
+    eventError = "Participant records are temporarily unavailable.";
+  } else if (records) {
+    eventRecords = records;
+  }
 
   const adminMessage = req.session.adminMessage || null;
   const adminError = req.session.adminError || null;
@@ -644,9 +708,10 @@ app.get("/admin/events/:id", requireAdmin, async (req, res) => {
     event,
     bracket,
     adminView: true,
-    records: records || [],
+    records: eventRecords,
     adminMessage,
     adminError,
+    eventError,
     user: req.session.user || null,
     admin: req.session.admin || null,
   });
@@ -668,7 +733,7 @@ app.post("/admin/events/:id/report", requireAdmin, async (req, res) => {
       return res.redirect("/admin/dashboard");
     }
 
-    const bracket = typeof event.bracket === "string" ? JSON.parse(event.bracket) : event.bracket || { rounds: [] };
+    const bracket = parseBracket(event.bracket);
     const match = findMatch(bracket, matchId);
 
     if (!match) {
