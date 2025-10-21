@@ -201,10 +201,6 @@ app.get("/discord", (_, res) => {
   res.redirect("https://discord.gg/ranktiers");
 });
 
-app.get("/discord", (_, res) => {
-  res.redirect("https://discord.gg/ranktiers");
-});
-
 // -------------------- DISCORD WEBHOOK --------------------
 const webhook = process.env.DISCORD_WEBHOOK_URL
   ? new WebhookClient({ url: process.env.DISCORD_WEBHOOK_URL })
