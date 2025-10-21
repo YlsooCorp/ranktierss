@@ -27,9 +27,76 @@
                                                   <a href="/admin/logout" class="logout">Logout</a>
                                                 </header>
 
-                                                <main>
-                                                  <section class="section">
-                                                    <h2>🎮 Games</h2>
+<main>
+  <% if (adminMessage) { %>
+    <div class="notice success"><%= adminMessage %></div>
+  <% } %>
+  <% if (adminError) { %>
+    <div class="notice error"><%= adminError %></div>
+  <% } %>
+
+  <section class="section">
+    <h2>🏆 Create Event</h2>
+    <form class="event-builder" method="POST" action="/admin/events/create">
+      <div class="form-row">
+        <input type="text" name="name" placeholder="Event name" required>
+        <select name="game" required>
+          <option value="">Select game</option>
+          <% games.forEach(g => { %>
+            <option value="<%= g.name %>"><%= g.name %></option>
+          <% }) %>
+        </select>
+        <input type="text" name="kit" placeholder="Kit" required>
+      </div>
+      <div class="tier-picker">
+        <label class="include-all">
+          <input type="checkbox" name="tiers_all" value="on" checked>
+          Include every tier
+        </label>
+        <div class="tier-grid">
+          <% TIERS.forEach(tier => { %>
+            <label>
+              <input type="checkbox" name="tiers" value="<%= tier %>">
+              <span><%= tier %></span>
+            </label>
+          <% }) %>
+        </div>
+      </div>
+      <p class="helper-text">Uncheck "Include every tier" to target specific tiers.</p>
+      <button type="submit">Create Event</button>
+    </form>
+
+    <div class="events-summary">
+      <h3>Active &amp; Recent Events</h3>
+      <% if (events.length > 0) { %>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Game</th>
+              <th>Kit</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% events.forEach(event => { %>
+              <tr>
+                <td><%= event.name %></td>
+                <td><%= event.game %></td>
+                <td><%= event.kit %></td>
+                <td><a class="table-link" href="/admin/events/<%= event.id %>">Manage →</a></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <p class="empty">No events yet.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>🎮 Games</h2>
                                                     <form method="POST" action="/admin/game/add">
                                                       <input type="text" name="name" placeholder="Add new game" required>
                                                       <button type="submit">Add Game</button>

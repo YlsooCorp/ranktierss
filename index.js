@@ -38,7 +38,142 @@ app.use(
   })
 );
 
-const TIERS = ["LT5","HT5","LT4","HT4","LT3","HT3","LT2","HT2","LT1","HT1"];
+const TIERS = ["LT5", "HT5", "LT4", "HT4", "LT3", "HT3", "LT2", "HT2", "LT1", "HT1"];
+
+function buildBracket(players) {
+  const sanitized = players.filter(Boolean);
+  if (sanitized.length === 0) return { rounds: [] };
+
+  const bracketSize = Math.max(2, 1 << Math.ceil(Math.log2(sanitized.length)));
+  const slots = [...sanitized];
+  while (slots.length < bracketSize) slots.push(null);
+
+  const rounds = [];
+  let previousRound = [];
+
+  const firstRound = [];
+  for (let i = 0; i < slots.length; i += 2) {
+    const matchId = `r1m${i / 2 + 1}`;
+    firstRound.push({
+      id: matchId,
+      round: 1,
+      match: i / 2 + 1,
+      player1: slots[i],
+      player2: slots[i + 1],
+      winner: null,
+      loser: null,
+      autoAdvance: false,
+      source1: null,
+      source2: null,
+      nextMatchId: null,
+      nextMatchSlot: null,
+    });
+  }
+  rounds.push(firstRound);
+  previousRound = firstRound;
+
+  let roundNumber = 2;
+  while (previousRound.length > 1) {
+    const currentRound = [];
+    for (let i = 0; i < previousRound.length; i += 2) {
+      const matchId = `r${roundNumber}m${i / 2 + 1}`;
+      const match = {
+        id: matchId,
+        round: roundNumber,
+        match: i / 2 + 1,
+        player1: null,
+        player2: null,
+        winner: null,
+        loser: null,
+        autoAdvance: false,
+        source1: previousRound[i]?.id || null,
+        source2: previousRound[i + 1]?.id || null,
+        nextMatchId: null,
+        nextMatchSlot: null,
+      };
+      currentRound.push(match);
+      if (previousRound[i]) {
+        previousRound[i].nextMatchId = matchId;
+        previousRound[i].nextMatchSlot = "player1";
+      }
+      if (previousRound[i + 1]) {
+        previousRound[i + 1].nextMatchId = matchId;
+        previousRound[i + 1].nextMatchSlot = "player2";
+      }
+    }
+    rounds.push(currentRound);
+    previousRound = currentRound;
+    roundNumber++;
+  }
+
+  return { rounds };
+}
+
+function indexBracketMatches(bracket) {
+  const map = new Map();
+  if (!bracket || !Array.isArray(bracket.rounds)) return map;
+  bracket.rounds.forEach(round => {
+    round.forEach(match => {
+      map.set(match.id, match);
+    });
+  });
+  return map;
+}
+
+function propagateAutoAdvances(bracket) {
+  const matchMap = indexBracketMatches(bracket);
+  const queue = [];
+  matchMap.forEach(match => {
+    const onlyOne = (match.player1 && !match.player2) || (!match.player1 && match.player2);
+    if (onlyOne && !match.winner) {
+      match.autoAdvance = true;
+      match.winner = match.player1 || match.player2;
+      queue.push(match);
+    }
+  });
+
+  while (queue.length > 0) {
+    const match = queue.shift();
+    if (!match.nextMatchId || !match.winner) continue;
+    const next = matchMap.get(match.nextMatchId);
+    if (!next) continue;
+    next[match.nextMatchSlot] = match.winner;
+    const onlyOne = (next.player1 && !next.player2) || (!next.player1 && next.player2);
+    if (onlyOne && !next.winner) {
+      next.autoAdvance = true;
+      next.winner = next.player1 || next.player2;
+      queue.push(next);
+    }
+  }
+}
+
+function assignWinnerToNextMatch(bracket, match) {
+  if (!match.nextMatchId || !match.winner) return;
+  const matchMap = indexBracketMatches(bracket);
+  const next = matchMap.get(match.nextMatchId);
+  if (!next) return;
+  next[match.nextMatchSlot] = match.winner;
+  const onlyOne = (next.player1 && !next.player2) || (!next.player1 && next.player2);
+  if (onlyOne && !next.winner) {
+    next.autoAdvance = true;
+    next.winner = next.player1 || next.player2;
+    assignWinnerToNextMatch(bracket, next);
+  }
+}
+
+function findMatch(bracket, matchId) {
+  if (!bracket || !Array.isArray(bracket.rounds)) return null;
+  for (const round of bracket.rounds) {
+    for (const match of round) {
+      if (match.id === matchId) return match;
+    }
+  }
+  return null;
+}
+
+app.get("/discord", (_, res) => {
+  res.redirect("https://discord.gg/ranktiers");
+});
 
 // -------------------- DISCORD WEBHOOK --------------------
 const webhook = process.env.DISCORD_WEBHOOK_URL
@@ -232,6 +367,48 @@ app.get("/", async (req, res) => {
   res.render("index", { games: games || [], user: req.session.user || null, linkedAccounts });
 });
 
+app.get("/terms", (req, res) => {
+  res.render("terms", { user: req.session.user || null });
+});
+
+app.get("/privacy", (req, res) => {
+  res.render("privacy", { user: req.session.user || null });
+});
+
+app.get("/events", async (req, res) => {
+  const { data: events } = await supabase
+    .from("events")
+    .select("id, name, game, kit, created_at")
+    .order("created_at", { ascending: false });
+  res.render("events", {
+    events: events || [],
+    user: req.session.user || null,
+  });
+});
+
+app.get("/events/:id", async (req, res) => {
+  const eventId = req.params.id;
+  const { data: event } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
+  if (!event) return res.status(404).send("Event not found");
+
+  const bracket = typeof event.bracket === "string" ? JSON.parse(event.bracket) : event.bracket || { rounds: [] };
+  const { data: records } = await supabase
+    .from("player_event_records")
+    .select("player_id, wins, losses, players(username)")
+    .eq("event_id", eventId);
+
+  res.render("event", {
+    event,
+    bracket,
+    adminView: false,
+    records: records || [],
+    adminMessage: null,
+    adminError: null,
+    user: req.session.user || null,
+    admin: req.session.admin || null,
+  });
+});
+
 app.get("/game/:name", async (req, res) => {
   const { name } = req.params;
   const { data: allStats } = await supabase
@@ -281,6 +458,11 @@ app.get("/profile/:username", async (req, res) => {
     .select("earned_at, achievements(name, description, icon)")
     .eq("player_id", player.id);
 
+  const { data: eventRecords } = await supabase
+    .from("player_event_records")
+    .select("event_id, wins, losses, events(name, game, kit)")
+    .eq("player_id", player.id);
+
   const hasMinecraft = stats.some(s => s.game.toLowerCase() === "minecraft");
   let mcUUID = null;
   if (hasMinecraft) mcUUID = await getMinecraftUUID(username);
@@ -292,7 +474,8 @@ app.get("/profile/:username", async (req, res) => {
     achievements: achievements || [],
     mcUUID,
     user: req.session.user || null,
-    totalPoints
+    totalPoints,
+    eventRecords: eventRecords || [],
   });
 });
 
@@ -348,6 +531,236 @@ app.post("/admin/delete/:table/:id", requireAdmin, async (req, res) => {
   res.redirect("/admin/dashboard");
 });
 
+app.post("/admin/events/create", requireAdmin, async (req, res) => {
+  const { name, game, kit, tiers_all, tiers } = req.body;
+  if (!name || !game || !kit) {
+    req.session.adminError = "Event name, game, and kit are required.";
+    return res.redirect("/admin/dashboard");
+  }
+
+  let selectedTiers = [];
+  if (tiers_all === "on") selectedTiers = [...TIERS];
+  else if (Array.isArray(tiers)) selectedTiers = tiers;
+  else if (typeof tiers === "string" && tiers.trim() !== "") selectedTiers = [tiers];
+
+  if (selectedTiers.length === 0) selectedTiers = [...TIERS];
+
+  try {
+    let query = supabase
+      .from("player_stats")
+      .select("player_id, tier, players(username)")
+      .eq("game", game)
+      .eq("kit", kit);
+
+    if (selectedTiers.length !== TIERS.length) {
+      query = query.in("tier", selectedTiers);
+    }
+
+    const { data: stats, error: statsError } = await query;
+    if (statsError) throw statsError;
+
+    if (!stats || stats.length === 0) {
+      req.session.adminError = "No players found for the selected criteria.";
+      return res.redirect("/admin/dashboard");
+    }
+
+    const seen = new Set();
+    const participants = [];
+    stats.forEach(stat => {
+      if (!seen.has(stat.player_id)) {
+        seen.add(stat.player_id);
+        participants.push({
+          id: stat.player_id,
+          username: stat.players?.username || `Player ${stat.player_id}`,
+        });
+      }
+    });
+
+    participants.sort(() => Math.random() - 0.5);
+
+    if (participants.length < 2) {
+      req.session.adminError = "At least two players are required to create an event.";
+      return res.redirect("/admin/dashboard");
+    }
+
+    const bracket = buildBracket(participants);
+    propagateAutoAdvances(bracket);
+
+    const { data: createdEvent, error: eventError } = await supabase
+      .from("events")
+      .insert([
+        {
+          name,
+          game,
+          kit,
+          tiers: selectedTiers,
+          bracket,
+        },
+      ])
+      .select()
+      .single();
+
+    if (eventError) throw eventError;
+
+    await supabase.from("player_event_records").upsert(
+      participants.map(participant => ({
+        event_id: createdEvent.id,
+        player_id: participant.id,
+        wins: 0,
+        losses: 0,
+      })),
+      { onConflict: "event_id,player_id" }
+    );
+
+    req.session.adminMessage = `Event "${name}" created successfully.`;
+    res.redirect(`/admin/events/${createdEvent.id}`);
+  } catch (error) {
+    console.error("Failed to create event", error);
+    req.session.adminError = "Failed to create event. Please try again.";
+    res.redirect("/admin/dashboard");
+  }
+});
+
+app.get("/admin/events/:id", requireAdmin, async (req, res) => {
+  const eventId = req.params.id;
+  const { data: event, error } = await supabase.from("events").select("*").eq("id", eventId).single();
+  if (error || !event) {
+    req.session.adminError = "Event not found.";
+    return res.redirect("/admin/dashboard");
+  }
+
+  const bracket = typeof event.bracket === "string" ? JSON.parse(event.bracket) : event.bracket || { rounds: [] };
+  const { data: records } = await supabase
+    .from("player_event_records")
+    .select("player_id, wins, losses, players(username)")
+    .eq("event_id", eventId);
+
+  const adminMessage = req.session.adminMessage || null;
+  const adminError = req.session.adminError || null;
+  req.session.adminMessage = null;
+  req.session.adminError = null;
+
+  res.render("event", {
+    event,
+    bracket,
+    adminView: true,
+    records: records || [],
+    adminMessage,
+    adminError,
+    user: req.session.user || null,
+    admin: req.session.admin || null,
+  });
+});
+
+app.post("/admin/events/:id/report", requireAdmin, async (req, res) => {
+  const eventId = req.params.id;
+  const { matchId, winnerId } = req.body;
+
+  if (!matchId || !winnerId) {
+    req.session.adminError = "Match and winner are required.";
+    return res.redirect(`/admin/events/${eventId}`);
+  }
+
+  try {
+    const { data: event, error: eventError } = await supabase.from("events").select("*").eq("id", eventId).single();
+    if (eventError || !event) {
+      req.session.adminError = "Event not found.";
+      return res.redirect("/admin/dashboard");
+    }
+
+    const bracket = typeof event.bracket === "string" ? JSON.parse(event.bracket) : event.bracket || { rounds: [] };
+    const match = findMatch(bracket, matchId);
+
+    if (!match) {
+      req.session.adminError = "Match not found in bracket.";
+      return res.redirect(`/admin/events/${eventId}`);
+    }
+    if (match.autoAdvance) {
+      req.session.adminError = "Auto-advanced matches cannot be overridden.";
+      return res.redirect(`/admin/events/${eventId}`);
+    }
+    if (!match.player1 || !match.player2) {
+      req.session.adminError = "Both players must be set before recording a result.";
+      return res.redirect(`/admin/events/${eventId}`);
+    }
+    if (match.winner) {
+      req.session.adminError = "This match result has already been recorded.";
+      return res.redirect(`/admin/events/${eventId}`);
+    }
+
+    let winnerPlayer = null;
+    let loserPlayer = null;
+    if (String(match.player1.id) === String(winnerId)) {
+      winnerPlayer = match.player1;
+      loserPlayer = match.player2;
+    } else if (String(match.player2.id) === String(winnerId)) {
+      winnerPlayer = match.player2;
+      loserPlayer = match.player1;
+    } else {
+      req.session.adminError = "Winner must be one of the match participants.";
+      return res.redirect(`/admin/events/${eventId}`);
+    }
+
+    match.winner = winnerPlayer;
+    match.loser = loserPlayer;
+    match.completedAt = new Date().toISOString();
+    assignWinnerToNextMatch(bracket, match);
+
+    const { error: updateError } = await supabase
+      .from("events")
+      .update({ bracket })
+      .eq("id", eventId);
+    if (updateError) throw updateError;
+
+    const { data: winnerRecord } = await supabase
+      .from("player_event_records")
+      .select("wins, losses")
+      .eq("event_id", event.id)
+      .eq("player_id", winnerPlayer.id)
+      .maybeSingle();
+
+    await supabase.from("player_event_records").upsert(
+      [
+        {
+          event_id: event.id,
+          player_id: winnerPlayer.id,
+          wins: (winnerRecord?.wins || 0) + 1,
+          losses: winnerRecord?.losses || 0,
+        },
+      ],
+      { onConflict: "event_id,player_id" }
+    );
+
+    if (loserPlayer) {
+      const { data: loserRecord } = await supabase
+        .from("player_event_records")
+        .select("wins, losses")
+        .eq("event_id", event.id)
+        .eq("player_id", loserPlayer.id)
+        .maybeSingle();
+
+      await supabase.from("player_event_records").upsert(
+        [
+          {
+            event_id: event.id,
+            player_id: loserPlayer.id,
+            wins: loserRecord?.wins || 0,
+            losses: (loserRecord?.losses || 0) + 1,
+          },
+        ],
+        { onConflict: "event_id,player_id" }
+      );
+    }
+
+    req.session.adminMessage = "Match result recorded.";
+    res.redirect(`/admin/events/${eventId}`);
+  } catch (error) {
+    console.error("Failed to record match", error);
+    req.session.adminError = "Failed to record match result.";
+    res.redirect(`/admin/events/${eventId}`);
+  }
+});
+
 // Enhanced Admin Dashboard with management tables
 app.get("/admin/dashboard", requireAdmin, async (req, res) => {
   const { data: games } = await supabase.from("games").select("*").order("name");
@@ -356,13 +769,25 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
     .from("player_stats")
     .select("id, player_id, game, kit, tier, points, players(username)")
     .order("points", { ascending: false });
+  const { data: events } = await supabase
+    .from("events")
+    .select("id, name, game, kit, created_at")
+    .order("created_at", { ascending: false });
+
+  const adminMessage = req.session.adminMessage || null;
+  const adminError = req.session.adminError || null;
+  req.session.adminMessage = null;
+  req.session.adminError = null;
 
   res.render("admin-dashboard", {
     admin: req.session.admin,
     games: games || [],
     players: players || [],
     stats: stats || [],
+    events: events || [],
     TIERS,
+    adminMessage,
+    adminError,
   });
 });
 

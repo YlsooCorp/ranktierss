@@ -6,12 +6,14 @@
                                 <link rel="stylesheet" href="/styles.css">
                               </head>
                               <body>
-                                <header class="navbar">
-                                  <h1 class="logo"><a href="/">RankTiers</a></h1>
-                                  <nav>
-                                    <% if (user) { %>
-                                      <a href="/account">Account</a>
-                                      <a href="/logout" class="logout">Logout</a>
+  <header class="navbar">
+    <h1 class="logo"><a href="/">RankTiers</a></h1>
+    <nav>
+      <a href="/events">Events</a>
+      <a href="/submit">Submit Stats</a>
+      <% if (user) { %>
+        <a href="/account">Account</a>
+        <a href="/logout" class="logout">Logout</a>
                                     <% } else { %>
                                       <a href="/login">Login</a>
                                       <a href="/register">Register</a>
@@ -42,8 +44,15 @@
                                   </section>
                                 </main>
 
-                                <footer>
-                                  <p>© 2025 RankTiers. All rights reserved.</p>
-                                </footer>
-                              </body>
-                              </html>
+        <footer>
+          <p>© 2025 RankTiers. All rights reserved.</p>
+          <nav>
+            <a href="/terms">Terms of Service</a>
+            <span aria-hidden="true">•</span>
+            <a href="/privacy">Privacy Policy</a>
+            <span aria-hidden="true">•</span>
+            <a href="/discord" target="_blank" rel="noopener">Join our Discord</a>
+          </nav>
+        </footer>
+      </body>
+      </html>
