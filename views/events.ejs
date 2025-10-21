@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Events &amp; Tournaments | RankTiers</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="navbar">
+    <h1 class="logo"><a href="/">RankTiers</a></h1>
+    <nav>
+      <a href="/events" class="active-nav">Events</a>
+      <a href="/submit">Submit Stats</a>
+      <% if (user) { %>
+        <a href="/account">Account</a>
+        <a href="/logout" class="logout">Logout</a>
+      <% } else { %>
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main class="events-page">
+    <section class="page-hero">
+      <h2>Community Events &amp; Tournaments</h2>
+      <p>Follow every bracket and cheer on your favorite competitors.</p>
+    </section>
+
+    <% if (eventsError) { %>
+      <div class="notice error"><%= eventsError %></div>
+    <% } %>
+
+    <section class="events-grid">
+      <% if (events.length > 0) { %>
+        <% events.forEach(event => { %>
+          <article class="event-card card">
+            <div class="event-card-body">
+              <h3><%= event.name %></h3>
+              <p class="event-meta">Game: <strong><%= event.game %></strong></p>
+              <p class="event-meta">Kit: <strong><%= event.kit %></strong></p>
+              <a class="event-link" href="/events/<%= event.id %>">View Bracket →</a>
+            </div>
+          </article>
+        <% }) %>
+      <% } else { %>
+        <div class="empty-state card">
+          <h3>No events yet</h3>
+          <p>Check back soon for the next tournament announcement.</p>
+        </div>
+      <% } %>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 RankTiers. All rights reserved.</p>
+    <nav>
+      <a href="/terms">Terms of Service</a>
+      <span aria-hidden="true">•</span>
+      <a href="/privacy">Privacy Policy</a>
+      <span aria-hidden="true">•</span>
+      <a href="/discord" target="_blank" rel="noopener">Join our Discord</a>
+    </nav>
+  </footer>
+</body>
+</html>
