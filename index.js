@@ -40,6 +40,10 @@ app.use(
 
 const TIERS = ["LT5","HT5","LT4","HT4","LT3","HT3","LT2","HT2","LT1","HT1"];
 
+app.get("/discord", (_, res) => {
+  res.redirect("https://discord.gg/ranktiers");
+});
+
 // -------------------- DISCORD WEBHOOK --------------------
 const webhook = process.env.DISCORD_WEBHOOK_URL
   ? new WebhookClient({ url: process.env.DISCORD_WEBHOOK_URL })
@@ -230,6 +234,14 @@ app.get("/", async (req, res) => {
   }
 
   res.render("index", { games: games || [], user: req.session.user || null, linkedAccounts });
+});
+
+app.get("/terms", (req, res) => {
+  res.render("terms", { user: req.session.user || null });
+});
+
+app.get("/privacy", (req, res) => {
+  res.render("privacy", { user: req.session.user || null });
 });
 
 app.get("/game/:name", async (req, res) => {
