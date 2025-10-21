@@ -1,0 +1,78 @@
+                                          <!DOCTYPE html>
+                                          <html lang="en">
+                                          <head>
+                                            <meta charset="UTF-8">
+                                            <title><%= player.username %> | Profile</title>
+                                            <link rel="stylesheet" href="/styles.css">
+                                          </head>
+                                          <body>
+                                          <header class="navbar">
+                                            <h1 class="logo"><a href="/">RankTiers</a></h1>
+                                            <nav>
+                                              <% if (user) { %>
+                                                <a href="/account">Account</a>
+                                                <a href="/logout" class="logout">Logout</a>
+                                              <% } else { %>
+                                                <a href="/login">Login</a>
+                                                <a href="/register">Register</a>
+                                              <% } %>
+                                            </nav>
+                                          </header>
+
+                                          <main class="profile-page">
+                                            <section class="profile-header">
+                                              <% if (mcUUID) { %>
+                                                <img class="profile-head" src="https://crafatar.com/avatars/<%= mcUUID %>?size=128" alt="Player head">
+                                              <% } %>
+                                              <div>
+                                                <h2><%= player.username %></h2>
+                                                <p class="overall">Total Points: <strong><%= totalPoints %></strong></p>
+                                              </div>
+                                            </section>
+
+                                            <!-- Stats -->
+                                            <section class="stats-card">
+                                              <h3>Game Stats</h3>
+                                              <% if (stats.length > 0) { %>
+                                                <table class="stats-table">
+                                                  <thead>
+                                                    <tr><th>Game</th><th>Kit</th><th>Tier</th><th>Points</th></tr>
+                                                  </thead>
+                                                  <tbody>
+                                                    <% stats.forEach(s => { %>
+                                                      <tr>
+                                                        <td><%= s.game %></td>
+                                                        <td><%= s.kit %></td>
+                                                        <td><%= s.tier %></td>
+                                                        <td><%= s.points %></td>
+                                                      </tr>
+                                                    <% }) %>
+                                                  </tbody>
+                                                </table>
+                                              <% } else { %>
+                                                <p>No stats yet.</p>
+                                              <% } %>
+                                            </section>
+
+                                            <!-- Achievements -->
+                                            <section class="achievements-card">
+                                              <h3>Achievements</h3>
+                                              <% if (achievements && achievements.length > 0) { %>
+                                                <div class="achievements-grid">
+                                                  <% achievements.forEach(a => { %>
+                                                    <div class="achievement">
+                                                      <% if (a.achievements.icon) { %>
+                                                        <img src="<%= a.achievements.icon %>" alt="<%= a.achievements.name %>">
+                                                      <% } %>
+                                                      <h4><%= a.achievements.name %></h4>
+                                                      <p><%= a.achievements.description %></p>
+                                                    </div>
+                                                  <% }) %>
+                                                </div>
+                                              <% } else { %>
+                                                <p class="empty">No achievements yet.</p>
+                                              <% } %>
+                                            </section>
+                                          </main>
+                                          </body>
+                                          </html>

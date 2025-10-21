@@ -1,0 +1,98 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Compare Players - RankTiers</title>
+      <link rel="stylesheet" href="/styles.css">
+    </head>
+    <body>
+    <header class="navbar">
+      <h1 class="logo"><a href="/">RankTiers</a></h1>
+    </header>
+
+    <main class="compare-page">
+      <h2>Compare Players</h2>
+
+      <form method="GET" action="/compare" class="compare-form">
+        <input type="text" name="player1" placeholder="Player 1" required>
+        <input type="text" name="player2" placeholder="Player 2" required>
+        <button type="submit">Compare</button>
+      </form>
+
+      <% if (error) { %>
+        <p class="error"><%= error %></p>
+      <% } else if (player1 && player2) { %>
+      <section class="compare-container">
+        <div class="player-card">
+          <h3><%= player1.username %></h3>
+          <p><strong>Total Points:</strong> <%= total1 %></p>
+          <p><strong>Games:</strong> <%= totalGames1 %></p>
+          <p><strong>Average Points:</strong> <%= avg1 %></p>
+          <p><strong>Win %:</strong> <span class="win"><%= winRate1 %>%</span></p>
+          <h4>Kits & Tiers</h4>
+          <ul>
+            <% kits1.forEach(k => { %>
+              <li><%= k %></li>
+            <% }) %>
+          </ul>
+        </div>
+
+        <div class="vs">VS</div>
+
+        <div class="player-card">
+          <h3><%= player2.username %></h3>
+          <p><strong>Total Points:</strong> <%= total2 %></p>
+          <p><strong>Games:</strong> <%= totalGames2 %></p>
+          <p><strong>Average Points:</strong> <%= avg2 %></p>
+          <p><strong>Win %:</strong> <span class="win"><%= winRate2 %>%</span></p>
+          <h4>Kits & Tiers</h4>
+          <ul>
+            <% kits2.forEach(k => { %>
+              <li><%= k %></li>
+            <% }) %>
+          </ul>
+        </div>
+      </section>
+      <% } %>
+    </main>
+
+    <style>
+    .compare-page { text-align:center; margin-top:2rem; }
+    .compare-form input {
+      background: rgba(255,255,255,0.1);
+      border:none; color:#fff;
+      padding:0.6rem 1rem; margin:0.5rem;
+      border-radius:8px;
+    }
+    .compare-form button {
+      background:linear-gradient(135deg,#4facfe,#00f2fe);
+      border:none; padding:0.7rem 1.2rem;
+      border-radius:8px; cursor:pointer; font-weight:600;
+    }
+    .compare-container {
+      display:flex; justify-content:center; align-items:flex-start;
+      margin-top:2rem; gap:2rem; flex-wrap:wrap;
+    }
+    .player-card {
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:16px; padding:1.5rem;
+      width:260px; text-align:left; color:#fff;
+      box-shadow:0 4px 20px rgba(0,0,0,0.2);
+    }
+    .player-card h3 { font-size:1.5rem; margin-bottom:0.5rem; }
+    .player-card h4 { margin-top:1rem; color:#00f2fe; }
+    .player-card ul { list-style:none; padding-left:0; }
+    .player-card li {
+      font-size:0.9rem;
+      padding:0.3rem 0;
+      border-bottom:1px solid rgba(255,255,255,0.1);
+    }
+    .vs {
+      font-size:2.5rem; font-weight:700;
+      color:#4facfe; margin-top:5rem;
+    }
+    .win { color:#00f2fe; font-weight:700; }
+    </style>
+    </body>
+    </html>

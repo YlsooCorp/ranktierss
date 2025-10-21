@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Submit Stats - RankTiers</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="container"><a href="/">&larr; Home</a></header>
+  <main class="container">
+    <h2>Submit Your Stats</h2>
+    <% if (error) { %><p class="error"><%= error %></p><% } %>
+    <% if (success) { %><p class="success"><%= success %></p><% } %>
+    <form action="/submit" method="post" enctype="multipart/form-data">
+      <label>Player Name: <input type="text" name="player_name" required></label><br>
+      <label>Game: <input type="text" name="game" required></label><br>
+      <label>Points: <input type="number" name="points" required></label><br>
+      <label>Screenshot: <input type="file" name="screenshot" accept="image/*"></label><br>
+      <button type="submit">Submit</button>
+    </form>
+  </main>
+</body>
+</html>

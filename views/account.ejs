@@ -1,0 +1,73 @@
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                      <meta charset="UTF-8">
+                      <title>Account - RankTiers</title>
+                      <link rel="stylesheet" href="/styles.css">
+                    </head>
+                    <body>
+                      <header class="navbar">
+                        <h1 class="logo"><a href="/">RankTiers</a></h1>
+                        <nav>
+                          <a href="/">Home</a>
+                          <a href="/logout" class="logout">Logout</a>
+                        </nav>
+                      </header>
+
+                      <main class="account-page">
+                        <section class="account-header">
+                          <h2>Welcome, <%= user.email %></h2>
+                          <p>Link your game accounts below to track progress across all titles.</p>
+                        </section>
+
+                        <section class="link-card">
+                          <h3>Link a New Game</h3>
+                          <form method="POST" action="/account/link">
+                            <label>Game</label>
+                            <select name="game" required>
+                              <% games.forEach(g => { %>
+                                <option value="<%= g.name %>"><%= g.name %></option>
+                              <% }) %>
+                            </select>
+
+                            <label>In-Game Username</label>
+                            <input type="text" name="game_username" placeholder="Your in-game name" required>
+
+                            <div id="cr-id-section" style="display:none;">
+                              <label>Clash Royale ID</label>
+                              <input type="text" name="game_id" placeholder="#XXXXXX">
+                            </div>
+
+                            <button type="submit">Link Account</button>
+                          </form>
+                        </section>
+
+                        <section class="linked-section">
+                          <h3>Linked Accounts</h3>
+                          <% if (linked.length > 0) { %>
+                            <ul>
+                              <% linked.forEach(acc => { %>
+                                <li>
+                                  <strong><%= acc.game %></strong> — 
+                                  <%= acc.game_username %>
+                                  <% if (acc.game_id) { %>
+                                    (<%= acc.game_id %>)
+                                  <% } %>
+                                </li>
+                              <% }) %>
+                            </ul>
+                          <% } else { %>
+                            <p class="empty">You haven’t linked any accounts yet.</p>
+                          <% } %>
+                        </section>
+                      </main>
+
+                      <script>
+                        const gameSelect = document.querySelector('select[name="game"]');
+                        const crSection = document.getElementById('cr-id-section');
+                        gameSelect.addEventListener('change', () => {
+                          crSection.style.display = gameSelect.value === "Clash Royale" ? "block" : "none";
+                        });
+                      </script>
+                    </body>
+                    </html>

@@ -1,0 +1,26 @@
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Admin Login - RankTiers</title>
+        <link rel="stylesheet" href="/styles.css">
+      </head>
+      <body>
+        <main class="container">
+          <h2>Admin Login</h2>
+
+          <% if (typeof error !== 'undefined' && error) { %>
+            <p class="error"><%= error %></p>
+          <% } %>
+
+          <form action="/admin/login" method="post">
+            <label>Username: <input type="text" name="username"></label><br>
+            <label>Password: <input type="password" name="password"></label><br>
+            <button type="submit">Login</button>
+          </form>
+
+          <p>DEV: use any username and password <b>admin</b> (for testing only)</p>
+        </main>
+      </body>
+      </html>
