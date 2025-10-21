@@ -6,12 +6,14 @@
                                             <link rel="stylesheet" href="/styles.css">
                                           </head>
                                           <body>
-                                          <header class="navbar">
-                                            <h1 class="logo"><a href="/">RankTiers</a></h1>
-                                            <nav>
-                                              <% if (user) { %>
-                                                <a href="/account">Account</a>
-                                                <a href="/logout" class="logout">Logout</a>
+  <header class="navbar">
+    <h1 class="logo"><a href="/">RankTiers</a></h1>
+    <nav>
+      <a href="/events">Events</a>
+      <a href="/submit">Submit Stats</a>
+      <% if (user) { %>
+        <a href="/account">Account</a>
+        <a href="/logout" class="logout">Logout</a>
                                               <% } else { %>
                                                 <a href="/login">Login</a>
                                                 <a href="/register">Register</a>
@@ -19,7 +21,7 @@
                                             </nav>
                                           </header>
 
-                                          <main class="profile-page">
+  <main class="profile-page">
                                             <section class="profile-header">
                                               <% if (mcUUID) { %>
                                                 <img class="profile-head" src="https://crafatar.com/avatars/<%= mcUUID %>?size=128" alt="Player head">
@@ -31,7 +33,7 @@
                                             </section>
 
                                             <!-- Stats -->
-                                            <section class="stats-card">
+    <section class="stats-card">
                                               <h3>Game Stats</h3>
                                               <% if (stats.length > 0) { %>
                                                 <table class="stats-table">
@@ -52,7 +54,37 @@
                                               <% } else { %>
                                                 <p>No stats yet.</p>
                                               <% } %>
-                                            </section>
+    </section>
+
+    <section class="stats-card">
+      <h3>Event Record</h3>
+      <% if (eventRecords && eventRecords.length > 0) { %>
+        <table class="stats-table">
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Game</th>
+              <th>Kit</th>
+              <th>Wins</th>
+              <th>Losses</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% eventRecords.forEach(record => { %>
+              <tr>
+                <td><%= record.events ? record.events.name : 'Event #' + record.event_id %></td>
+                <td><%= record.events ? record.events.game : '-' %></td>
+                <td><%= record.events ? record.events.kit : '-' %></td>
+                <td><%= record.wins || 0 %></td>
+                <td><%= record.losses || 0 %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <p class="empty">No event matches recorded yet.</p>
+      <% } %>
+    </section>
 
                                             <!-- Achievements -->
                                             <section class="achievements-card">
