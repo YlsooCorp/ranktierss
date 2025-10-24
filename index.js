@@ -38,6 +38,12 @@ app.use(
   })
 );
 
+app.use((req, res, next) => {
+  res.locals.currentUser = req.session.user || null;
+  res.locals.currentAdmin = req.session.admin || null;
+  next();
+});
+
 const TIERS = ["LT5", "HT5", "LT4", "HT4", "LT3", "HT3", "LT2", "HT2", "LT1", "HT1"];
 
 function buildBracket(players) {
@@ -270,29 +276,34 @@ async function checkAndAwardAchievements(playerId, totalPoints, tier) {
 }
 
 // -------------------- AUTH --------------------
-app.get("/register", (_, res) => res.render("register", { error: null }));
+app.get("/register", (_, res) => res.render("register", { error: null, pageTitle: "Create Account", navActive: null }));
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.render("register", { error: "Email and password required" });
+  if (!email || !password)
+    return res.render("register", { error: "Email and password required", pageTitle: "Create Account", navActive: null });
 
   const { data: existing } = await supabase.from("users").select("*").eq("email", email).single();
-  if (existing) return res.render("register", { error: "Email already registered" });
+  if (existing)
+    return res.render("register", { error: "Email already registered", pageTitle: "Create Account", navActive: null });
 
   const password_hash = await bcrypt.hash(password, 10);
   await supabase.from("users").insert([{ email, password_hash }]);
   res.redirect("/login");
 });
 
-app.get("/login", (_, res) => res.render("login", { error: null }));
+app.get("/login", (_, res) => res.render("login", { error: null, pageTitle: "Login", navActive: null }));
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.render("login", { error: "Email and password required" });
+  if (!email || !password)
+    return res.render("login", { error: "Email and password required", pageTitle: "Login", navActive: null });
 
   const { data: user } = await supabase.from("users").select("*").eq("email", email).single();
-  if (!user) return res.render("login", { error: "Invalid credentials" });
+  if (!user)
+    return res.render("login", { error: "Invalid credentials", pageTitle: "Login", navActive: null });
 
   const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) return res.render("login", { error: "Invalid credentials" });
+  if (!valid)
+    return res.render("login", { error: "Invalid credentials", pageTitle: "Login", navActive: null });
 
   req.session.user = { id: user.id, email: user.email };
   res.redirect("/account");
@@ -308,20 +319,24 @@ app.get("/account", requireAuth, async (req, res) => {
     .eq("user_id", req.session.user.id);
 
   const { data: games } = await supabase.from("games").select("*").order("name");
-  res.render("account", { linked: linked || [], games: games || [], user: req.session.user });
+  const minecraftOnly = (games || []).filter(game => game.name?.toLowerCase() === "minecraft");
+  const availableGames = minecraftOnly.length > 0 ? minecraftOnly : [{ name: "Minecraft" }];
+
+  res.render("account", {
+    linked: linked || [],
+    games: availableGames,
+    error: null,
+    pageTitle: "Account",
+    navActive: null,
+  });
 });
 
 app.post("/account/link", requireAuth, async (req, res) => {
-  const { game, game_username, game_id } = req.body;
+  const { game, game_username } = req.body;
   if (!game || !game_username) return res.redirect("/account");
 
-  if (game === "Clash Royale" && !game_id) {
-    return res.render("account", {
-      linked: [],
-      games: [],
-      user: req.session.user,
-      error: "Clash Royale ID is required.",
-    });
+  if (game !== "Minecraft") {
+    return res.redirect("/account");
   }
 
   const { data: existing } = await supabase
@@ -334,7 +349,7 @@ app.post("/account/link", requireAuth, async (req, res) => {
   if (existing)
     await supabase
       .from("user_linked_accounts")
-      .update({ game_username, game_id })
+      .update({ game_username, game_id: null })
       .eq("id", existing.id);
   else
     await supabase.from("user_linked_accounts").insert([
@@ -342,7 +357,7 @@ app.post("/account/link", requireAuth, async (req, res) => {
         user_id: req.session.user.id,
         game,
         game_username,
-        game_id: game === "Clash Royale" ? game_id : null,
+        game_id: null,
       },
     ]);
 
@@ -350,14 +365,14 @@ app.post("/account/link", requireAuth, async (req, res) => {
 });
 
 // -------------------- ADMIN --------------------
-app.get("/admin/login", (_, res) => res.render("admin-login", { error: null }));
+app.get("/admin/login", (_, res) => res.render("admin-login", { error: null, pageTitle: "Admin Login", navActive: null }));
 app.post("/admin/login", (req, res) => {
   const { username, password } = req.body;
   if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
     req.session.admin = { username };
     return res.redirect("/admin/dashboard");
   }
-  res.render("admin-login", { error: "Invalid credentials" });
+  res.render("admin-login", { error: "Invalid credentials", pageTitle: "Admin Login", navActive: null });
 });
 app.get("/admin/logout", (req, res) => {
   req.session.admin = null;
@@ -368,7 +383,16 @@ app.get("/admin/overview", requireAdmin, async (req, res) => { // <-- CHANGED fr
   const { data: games } = await supabase.from("games").select("*");
   const { data: players } = await supabase.from("players").select("*");
   const { data: submissions } = await supabase.from("submissions").select("*").order("created_at", { ascending: true });
-  res.render("admin-dashboard", { games, players, submissions, stats: [], TIERS }); // <-- ADDED stats: [], TIERS
+  const minecraftGames = (games || []).filter(game => game.name?.toLowerCase() === "minecraft");
+  res.render("admin-dashboard", {
+    games: minecraftGames.length > 0 ? minecraftGames : games || [],
+    players,
+    submissions,
+    stats: [],
+    TIERS,
+    pageTitle: "Admin Dashboard",
+    navActive: null,
+  }); // <-- ADDED stats: [], TIERS
 });
 
 app.post("/admin/game/add", requireAdmin, async (req, res) => {
@@ -386,11 +410,92 @@ app.get("/", async (req, res) => {
     const { data } = await supabase
       .from("user_linked_accounts")
       .select("*")
-      .eq("user_id", req.session.user.id);
+      .eq("user_id", req.session.user.id)
+      .eq("game", "Minecraft");
     linkedAccounts = data || [];
   }
 
-  res.render("index", { games: games || [], user: req.session.user || null, linkedAccounts });
+  const minecraftOnly = (games || []).filter(game => game.name?.toLowerCase() === "minecraft");
+  const featuredGames = minecraftOnly.length > 0 ? minecraftOnly : [{ name: "Minecraft" }];
+
+  res.render("index", {
+    games: featuredGames,
+    linkedAccounts,
+    pageTitle: "Home",
+    navActive: "home",
+  });
+});
+
+app.get("/terms", (req, res) => {
+  res.render("terms", { pageTitle: "Terms of Service", navActive: null });
+});
+
+app.get("/privacy", (req, res) => {
+  res.render("privacy", { pageTitle: "Privacy Policy", navActive: null });
+});
+
+app.get("/events", async (req, res) => {
+  let events = [];
+  let eventsError = null;
+
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select("id, name, game, kit, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    events = data || [];
+  } catch (error) {
+    console.error("Failed to load events", error);
+    eventsError = "Unable to load events right now. Please try again later.";
+  }
+
+  res.render("events", {
+    events,
+    eventsError,
+    pageTitle: "Events",
+    navActive: "events",
+  });
+});
+
+app.get("/events/:id", async (req, res) => {
+  const eventId = req.params.id;
+  const { data: event, error: eventError } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
+  if (eventError) {
+    console.error("Failed to fetch event", eventError);
+    return res.status(500).send("Unable to load event.");
+  }
+  if (!event) return res.status(404).send("Event not found");
+
+  const bracket = parseBracket(event.bracket);
+  let eventRecords = [];
+  let viewError = null;
+
+  const { data: records, error: recordsError } = await supabase
+    .from("player_event_records")
+    .select("player_id, wins, losses, players(username)")
+    .eq("event_id", eventId);
+
+  if (recordsError) {
+    console.error("Failed to fetch event records", recordsError);
+    viewError = "Participant records are temporarily unavailable.";
+  } else if (records) {
+    eventRecords = records;
+  }
+
+  res.render("event", {
+    event,
+    bracket,
+    adminView: false,
+    records: eventRecords,
+    adminMessage: null,
+    adminError: null,
+    eventError: viewError,
+    admin: req.session.admin || null,
+    pageTitle: event.name,
+    navActive: "events",
+  });
 });
 
 app.get("/terms", (req, res) => {
@@ -471,7 +576,13 @@ app.get("/game/:name", async (req, res) => {
     .eq("game", name);
 
   if (!allStats || allStats.length === 0)
-    return res.render("game", { stats: [], gameName: name, userLinked: [], user: req.session.user || null });
+    return res.render("game", {
+      stats: [],
+      gameName: name,
+      userLinked: [],
+      pageTitle: `${name} Leaderboard`,
+      navActive: "leaderboard",
+    });
 
   const map = {};
   allStats.forEach(stat => {
@@ -492,7 +603,13 @@ app.get("/game/:name", async (req, res) => {
     userLinked = data || [];
   }
 
-  res.render("game", { stats, gameName: name, userLinked, user: req.session.user || null });
+  res.render("game", {
+    stats,
+    gameName: name,
+    userLinked,
+    pageTitle: `${name} Leaderboard`,
+    navActive: "leaderboard",
+  });
 });
 
 // -------------------- PROFILE --------------------
@@ -527,9 +644,10 @@ app.get("/profile/:username", async (req, res) => {
     stats: stats || [],
     achievements: achievements || [],
     mcUUID,
-    user: req.session.user || null,
     totalPoints,
     eventRecords: eventRecords || [],
+    pageTitle: `${player.username} | Profile`,
+    navActive: null,
   });
 });
 
@@ -712,8 +830,9 @@ app.get("/admin/events/:id", requireAdmin, async (req, res) => {
     adminMessage,
     adminError,
     eventError,
-    user: req.session.user || null,
     admin: req.session.admin || null,
+    pageTitle: `${event.name} | Admin View`,
+    navActive: "events",
   });
 });
 
@@ -846,13 +965,18 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
 
   res.render("admin-dashboard", {
     admin: req.session.admin,
-    games: games || [],
+    games: (() => {
+      const minecraftGames = (games || []).filter(game => game.name?.toLowerCase() === "minecraft");
+      return minecraftGames.length > 0 ? minecraftGames : games || [];
+    })(),
     players: players || [],
     stats: stats || [],
     events: events || [],
     TIERS,
     adminMessage,
     adminError,
+    pageTitle: "Admin Dashboard",
+    navActive: null,
   });
 });
 
@@ -860,11 +984,13 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
 // -------------------- COMPARE --------------------
 app.get("/compare", async (req, res) => {
   const { player1, player2 } = req.query;
-  if (!player1 || !player2) return res.render("compare", { error: "Please enter both players." });
+  if (!player1 || !player2)
+    return res.render("compare", { error: "Please enter both players.", pageTitle: "Compare Players", navActive: null });
 
   const { data: p1 } = await supabase.from("players").select("*").eq("username", player1).single();
   const { data: p2 } = await supabase.from("players").select("*").eq("username", player2).single();
-  if (!p1 || !p2) return res.render("compare", { error: "Player not found." });
+  if (!p1 || !p2)
+    return res.render("compare", { error: "Player not found.", pageTitle: "Compare Players", navActive: null });
 
   const { data: s1 } = await supabase.from("player_stats").select("*").eq("player_id", p1.id);
   const { data: s2 } = await supabase.from("player_stats").select("*").eq("player_id", p2.id);
@@ -897,13 +1023,16 @@ app.get("/compare", async (req, res) => {
     winRate2,
     kits1,
     kits2,
-    user: req.session.user || null,
     error: null,
+    pageTitle: "Compare Players",
+    navActive: null,
   });
 });
 
 // -------------------- SUBMIT --------------------
-app.get("/submit", (_, res) => res.render("submit", { error: null, success: null }));
+app.get("/submit", (_, res) =>
+  res.render("submit", { error: null, success: null, pageTitle: "Submit Proof", navActive: "submit" })
+);
 
 app.post("/submit", upload.single("screenshot"), async (req, res) => {
   try {
@@ -911,7 +1040,12 @@ app.post("/submit", upload.single("screenshot"), async (req, res) => {
     const screenshot = req.file ? req.file.filename : null;
 
     if (!TIERS.includes(tier)) {
-      return res.render("submit", { error: "Invalid tier selected", success: null });
+      return res.render("submit", {
+        error: "Invalid tier selected",
+        success: null,
+        pageTitle: "Submit Proof",
+        navActive: "submit",
+      });
     }
 
     let { data: player } = await supabase
@@ -986,10 +1120,17 @@ app.post("/submit", upload.single("screenshot"), async (req, res) => {
         ? "Tier updated successfully and notification sent!"
         : "Submission received. Awaiting admin review.",
       error: null,
+      pageTitle: "Submit Proof",
+      navActive: "submit",
     });
   } catch (err) {
     console.error(err);
-    res.render("submit", { error: "Submission failed.", success: null });
+    res.render("submit", {
+      error: "Submission failed.",
+      success: null,
+      pageTitle: "Submit Proof",
+      navActive: "submit",
+    });
   }
 });
 

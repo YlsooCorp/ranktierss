@@ -1,80 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Privacy Policy - RankTiers</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <header class="navbar">
-      <h1 class="logo"><a href="/">RankTiers</a></h1>
-      <nav>
-        <% if (user) { %>
-          <a href="/account">Account</a>
-          <a href="/logout" class="logout">Logout</a>
-        <% } else { %>
-          <a href="/login">Login</a>
-          <a href="/register">Register</a>
-        <% } %>
-      </nav>
-    </header>
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: null }) %>
 
-    <main class="content static-page">
-      <section>
-        <h2>Privacy Policy</h2>
-        <p>
-          Your privacy matters to RankTiers. This policy explains what information we collect,
-          why we collect it, and how we use and protect it across our website and Discord
-          integrations.
-        </p>
+    <main class="mc-main">
+      <section class="mc-section">
+        <div class="mc-container mc-legal">
+          <header class="mc-section__header">
+            <p class="mc-tag">Legal</p>
+            <h1 class="mc-heading">Privacy Policy</h1>
+            <p class="mc-text-muted">How RankTiers handles data for the Minecraft ladder and events platform.</p>
+          </header>
 
-        <h3>Information We Collect</h3>
-        <p>
-          We collect the information you provide directly, such as registration details,
-          linked game accounts, and stat submissions. We may also log technical information
-          like IP addresses and device data to help secure the service.
-        </p>
+          <article class="mc-card mc-legal__content">
+            <p>
+              Your privacy matters to us. This policy explains what information RankTiers collects, why it’s collected, and how it
+              is used to deliver Minecraft leaderboards, submissions, and event support.
+            </p>
 
-        <h3>How We Use Information</h3>
-        <p>
-          The information we collect is used to power leaderboard features, verify
-          submissions, award achievements, and send optional notifications, including Discord
-          updates. We do not sell your personal information.
-        </p>
+            <h2>Information We Collect</h2>
+            <p>
+              We gather data that you provide directly—such as registration details, linked Minecraft accounts, and submission
+              evidence—as well as limited technical data (like IP addresses) to protect the platform.
+            </p>
 
-        <h3>Data Sharing and Storage</h3>
-        <p>
-          Data is stored using Supabase and is accessible only to authorized team members.
-          We may share limited information with trusted third-party services strictly to
-          provide RankTiers functionality.
-        </p>
+            <h2>How Information Is Used</h2>
+            <p>
+              Data powers leaderboard updates, verifies event outcomes, awards achievements, and sends optional Discord
+              notifications. We do not sell your personal information.
+            </p>
 
-        <h3>Your Choices</h3>
-        <p>
-          You can request updates or deletion of your account information by contacting the
-          RankTiers team. Disconnecting linked accounts will remove future updates from those
-          services.
-        </p>
+            <h2>Data Sharing and Storage</h2>
+            <p>
+              Information is stored securely with Supabase and accessed only by authorized staff. We may share limited details
+              with trusted services solely to operate RankTiers features.
+            </p>
 
-        <h3>Policy Updates</h3>
-        <p>
-          We may revise this Privacy Policy occasionally. Any changes will be posted here with
-          an updated effective date.
-        </p>
+            <h2>Your Choices</h2>
+            <p>
+              Contact the RankTiers team to update or delete your account information. Removing a linked account stops future
+              updates from that service.
+            </p>
 
-        <p class="last-updated">Effective date: February 12, 2025</p>
+            <h2>Policy Updates</h2>
+            <p>
+              We occasionally revise this policy. The “Effective date” below reflects the latest update; continued use means you
+              accept the changes.
+            </p>
+
+            <p class="mc-text-muted">Effective date: February 12, 2025</p>
+          </article>
+        </div>
       </section>
     </main>
 
-    <footer>
-      <p>© 2025 RankTiers. All rights reserved.</p>
-      <nav>
-        <a href="/terms">Terms of Service</a>
-        <span aria-hidden="true">•</span>
-        <a href="/privacy">Privacy Policy</a>
-        <span aria-hidden="true">•</span>
-        <a href="/discord" target="_blank" rel="noopener">Join our Discord</a>
-      </nav>
-    </footer>
+    <%- include('partials/footer') %>
   </body>
 </html>

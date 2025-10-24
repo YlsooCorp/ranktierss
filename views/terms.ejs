@@ -1,75 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Terms of Service - RankTiers</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <header class="navbar">
-      <h1 class="logo"><a href="/">RankTiers</a></h1>
-      <nav>
-        <% if (user) { %>
-          <a href="/account">Account</a>
-          <a href="/logout" class="logout">Logout</a>
-        <% } else { %>
-          <a href="/login">Login</a>
-          <a href="/register">Register</a>
-        <% } %>
-      </nav>
-    </header>
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: null }) %>
 
-    <main class="content static-page">
-      <section>
-        <h2>Terms of Service</h2>
-        <p>
-          Welcome to RankTiers. By accessing or using our website, Discord bot, or any
-          related services, you agree to the terms outlined on this page. Please read them
-          carefully.
-        </p>
+    <main class="mc-main">
+      <section class="mc-section">
+        <div class="mc-container mc-legal">
+          <header class="mc-section__header">
+            <p class="mc-tag">Legal</p>
+            <h1 class="mc-heading">Terms of Service</h1>
+            <p class="mc-text-muted">The rules for using RankTiers across the Minecraft ladder and event platform.</p>
+          </header>
 
-        <h3>Use of the Service</h3>
-        <p>
-          You agree to use RankTiers for lawful purposes only and in a manner that does not
-          infringe the rights of or restrict or inhibit anyone else's use and enjoyment of
-          the service. Misuse of the service may result in suspension or termination of your
-          access.
-        </p>
+          <article class="mc-card mc-legal__content">
+            <p>
+              Welcome to RankTiers. By accessing or using our website, Discord bot, or related services, you agree to the
+              terms outlined below. If you do not agree, please refrain from using the service.
+            </p>
 
-        <h3>Account Responsibilities</h3>
-        <p>
-          You are responsible for maintaining the confidentiality of your login credentials
-          and for all activities that occur under your account. Notify us immediately if you
-          suspect any unauthorized use of your account.
-        </p>
+            <h2>Use of the Service</h2>
+            <p>
+              RankTiers is dedicated to competitive Minecraft. You agree to engage respectfully, submit accurate evidence,
+              and avoid any actions that disrupt other players’ experiences. We may suspend or terminate access for misuse.
+            </p>
 
-        <h3>Submitted Content</h3>
-        <p>
-          By submitting stats, evidence, or other content to RankTiers, you confirm that you
-          have the right to share that content and grant us permission to store and display
-          it as part of the service.
-        </p>
+            <h2>Account Responsibilities</h2>
+            <p>
+              Keep your login credentials secure. You are responsible for all activity that happens under your account.
+              Contact us immediately if you believe your account has been compromised.
+            </p>
 
-        <h3>Changes to These Terms</h3>
-        <p>
-          We may update these Terms of Service from time to time. When we do, we will revise
-          the "Last updated" date below. Continued use of the service after changes are
-          posted constitutes acceptance of the updated terms.
-        </p>
+            <h2>Submitted Content</h2>
+            <p>
+              By submitting stats, screenshots, or other media, you confirm you have the right to share the content and grant
+              RankTiers permission to store and display it as part of the ladder.
+            </p>
 
-        <p class="last-updated">Last updated: February 12, 2025</p>
+            <h2>Updates to These Terms</h2>
+            <p>
+              We may update these terms periodically. The “Last updated” date reflects the latest revision. Continuing to
+              use RankTiers after changes are posted means you accept the new terms.
+            </p>
+
+            <p class="mc-text-muted">Last updated: February 12, 2025</p>
+          </article>
+        </div>
       </section>
     </main>
 
-    <footer>
-      <p>© 2025 RankTiers. All rights reserved.</p>
-      <nav>
-        <a href="/terms">Terms of Service</a>
-        <span aria-hidden="true">•</span>
-        <a href="/privacy">Privacy Policy</a>
-        <span aria-hidden="true">•</span>
-        <a href="/discord" target="_blank" rel="noopener">Join our Discord</a>
-      </nav>
-    </footer>
+    <%- include('partials/footer') %>
   </body>
 </html>

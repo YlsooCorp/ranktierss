@@ -1,66 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Events &amp; Tournaments | RankTiers</title>
-  <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-  <header class="navbar">
-    <h1 class="logo"><a href="/">RankTiers</a></h1>
-    <nav>
-      <a href="/events" class="active-nav">Events</a>
-      <a href="/submit">Submit Stats</a>
-      <% if (user) { %>
-        <a href="/account">Account</a>
-        <a href="/logout" class="logout">Logout</a>
-      <% } else { %>
-        <a href="/login">Login</a>
-        <a href="/register">Register</a>
-      <% } %>
-    </nav>
-  </header>
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: typeof navActive !== 'undefined' ? navActive : null }) %>
 
-  <main class="events-page">
-    <section class="page-hero">
-      <h2>Community Events &amp; Tournaments</h2>
-      <p>Follow every bracket and cheer on your favorite competitors.</p>
-    </section>
-
-    <% if (eventsError) { %>
-      <div class="notice error"><%= eventsError %></div>
-    <% } %>
-
-    <section class="events-grid">
-      <% if (events.length > 0) { %>
-        <% events.forEach(event => { %>
-          <article class="event-card card">
-            <div class="event-card-body">
-              <h3><%= event.name %></h3>
-              <p class="event-meta">Game: <strong><%= event.game %></strong></p>
-              <p class="event-meta">Kit: <strong><%= event.kit %></strong></p>
-              <a class="event-link" href="/events/<%= event.id %>">View Bracket →</a>
-            </div>
-          </article>
-        <% }) %>
-      <% } else { %>
-        <div class="empty-state card">
-          <h3>No events yet</h3>
-          <p>Check back soon for the next tournament announcement.</p>
+    <main class="mc-main">
+      <section class="mc-page-header">
+        <div class="mc-container">
+          <p class="mc-tag">Minecraft Events</p>
+          <h1 class="mc-heading">Emerald Cup Schedule</h1>
+          <p class="mc-text-muted">Follow every bracket across kits and tiers. All events feature Minecraft as the only game.</p>
         </div>
-      <% } %>
-    </section>
-  </main>
+      </section>
 
-  <footer>
-    <p>© 2025 RankTiers. All rights reserved.</p>
-    <nav>
-      <a href="/terms">Terms of Service</a>
-      <span aria-hidden="true">•</span>
-      <a href="/privacy">Privacy Policy</a>
-      <span aria-hidden="true">•</span>
-      <a href="/discord" target="_blank" rel="noopener">Join our Discord</a>
-    </nav>
-  </footer>
-</body>
+      <section class="mc-section">
+        <div class="mc-container">
+          <% if (eventsError) { %>
+            <div class="mc-notice mc-notice--error"><%= eventsError %></div>
+          <% } %>
+
+          <% if (events && events.length > 0) { %>
+            <div class="mc-grid mc-grid--events">
+              <% events.forEach(event => { %>
+                <article class="mc-card mc-event-card">
+                  <header>
+                    <h3><%= event.name %></h3>
+                    <span class="mc-badge">Kit: <%= event.kit %></span>
+                  </header>
+                  <p>Competitive bracket tailored for <strong><%= event.game %></strong> players.</p>
+                  <a class="mc-button mc-button--ghost" href="/events/<%= event.id %>">View Bracket</a>
+                </article>
+              <% }) %>
+            </div>
+          <% } else { %>
+            <div class="mc-empty mc-card">
+              <h2>No events yet</h2>
+              <p>We're preparing the next Emerald Cup bracket. Join our Discord to stay notified.</p>
+              <a class="mc-button mc-button--accent" href="https://discord.gg/ranktiers" target="_blank" rel="noopener">Discord</a>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
 </html>

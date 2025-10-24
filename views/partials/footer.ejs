@@ -1,0 +1,29 @@
+<footer class="mc-footer">
+  <div class="mc-footer__inner">
+    <div class="mc-footer__brand">
+      <span class="mc-logo__mark">RT</span>
+      <span class="mc-logo__text">RankTiers</span>
+    </div>
+    <div class="mc-footer__links">
+      <a href="/terms">Terms</a>
+      <span aria-hidden="true">•</span>
+      <a href="/privacy">Privacy</a>
+      <span aria-hidden="true">•</span>
+      <a href="https://discord.gg/ranktiers" target="_blank" rel="noopener">Discord</a>
+    </div>
+    <p class="mc-footer__copy">© <%= new Date().getFullYear() %> RankTiers. Crafted for the Minecraft competitive scene.</p>
+  </div>
+</footer>
+<script>
+  const navToggle = document.querySelector('[data-nav-toggle]');
+  const navLinks = document.querySelector('[data-nav-links]');
+  const navAuth = document.querySelector('[data-nav-auth]');
+  if (navToggle) {
+    navToggle.addEventListener('click', () => {
+      const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+      navToggle.setAttribute('aria-expanded', String(!expanded));
+      navLinks?.classList.toggle('is-open', !expanded);
+      navAuth?.classList.toggle('is-open', !expanded);
+    });
+  }
+</script>

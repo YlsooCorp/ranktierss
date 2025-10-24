@@ -1,168 +1,105 @@
-                                                                                                  <!DOCTYPE html>
-                                                                                                  <html lang="en">
-                                                                                                  <head>
-                                                                                                      <meta charset="UTF-8">
-                                                                                                      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                                                                                      <title><%= gameName %> | Game Stats</title>
-                                                                                                      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-                                                                                                      <link rel="stylesheet" href="/styles.css">
-                                                                                                  </head>
-                                                                                                  <body class="dark-theme">
-                                                                                                      <header class="navbar">
-                                                                                                          <div class="logo"><a href="/">GameHub</a></div>
-                                                                                                          <nav>
-                                                                                                              <a href="/" class="<%= gameName === 'Games' ? 'active-nav' : '' %>">Games</a>
-                                                                                                              <a href="/games/Minecraft" class="<%= gameName === 'Minecraft' ? 'active-nav' : '' %>">Minecraft</a>
-                                                                                                              <a href="/games/SomeOtherGame" class="<%= gameName === 'SomeOtherGame' ? 'active-nav' : '' %>">Another Game</a> 
-                                                                                                              <% if (user) { %>
-                                                                                                                  <a href="/account" class="nav-account">Account</a>
-                                                                                                                  <a href="/logout" class="nav-logout">Logout</a>
-                                                                                                              <% } else { %>
-                                                                                                                  <a href="/login">Login</a>
-                                                                                                                  <a href="/register" class="nav-register">Register</a>
-                                                                                                              <% } %>
-                                                                                                          </nav>
-                                                                                                      </header>
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: typeof navActive !== 'undefined' ? navActive : null }) %>
 
-                                                                                                      <main class="content-container">
-                                                                                                          <section class="hero-section">
-                                                                                                              <h1 class="hero-title"><%= gameName %> Leaderboard 👑</h1>
-                                                                                                              <p class="hero-subtitle">Track rankings, kits, and tiers for all players in real-time.</p>
-                                                                                                          </section>
+    <main class="mc-main">
+      <section class="mc-page-header">
+        <div class="mc-container mc-page-header__grid">
+          <div>
+            <p class="mc-tag">Minecraft Leaderboard</p>
+            <h1 class="mc-heading"><%= gameName %> Rankings</h1>
+            <p class="mc-text-muted">Live points and tiers for every verified Minecraft competitor.</p>
+          </div>
+          <form id="playerSearchForm" class="mc-search" autocomplete="off">
+            <label class="sr-only" for="playerSearchInput">Search player</label>
+            <input
+              id="playerSearchInput"
+              class="mc-input"
+              type="text"
+              name="player"
+              placeholder="Search player by IGN"
+              required
+            />
+            <button class="mc-button mc-button--accent" type="submit">View Profile</button>
+          </form>
+        </div>
+      </section>
 
-                                                                                                          <section class="search-section">
-                                                                                                              <form id="playerSearchForm" class="search-form">
-                                                                                                                  <input 
-                                                                                                                      type="text" 
-                                                                                                                      id="playerSearchInput" 
-                                                                                                                      placeholder="Search for a player..." 
-                                                                                                                      required
-                                                                                                                  >
-                                                                                                                  <button type="submit" class="search-button">Search</button>
-                                                                                                              </form>
-                                                                                                          </section>
+      <section class="mc-section">
+        <div class="mc-container">
+          <% if (!stats || stats.length === 0) { %>
+            <div class="mc-empty mc-card">
+              <h2>No placements yet</h2>
+              <p>Be the first to submit a verified result for this ladder.</p>
+              <a class="mc-button mc-button--accent" href="/submit">Submit Proof</a>
+            </div>
+          <% } else { %>
+            <div class="mc-card mc-card--table">
+              <table class="mc-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Player</th>
+                    <th>Kits &amp; Tiers</th>
+                    <th>Total Points</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% stats.forEach((stat, index) => {
+                       const isLinked = (userLinked || []).some(account => account.game_username === stat.players?.username);
+                  %>
+                    <tr class="<%= isLinked ? 'is-highlighted' : '' %>">
+                      <td data-title="Rank">#<%= index + 1 %></td>
+                      <td data-title="Player" class="mc-player">
+                        <a href="/profile/<%= stat.players?.username %>" class="mc-player__link">
+                          <img
+                            src="https://minotar.net/avatar/<%= stat.players?.username %>/32.png"
+                            alt="<%= stat.players?.username %> skin"
+                            class="mc-player__avatar"
+                            loading="lazy"
+                          />
+                          <span><%= stat.players?.username %></span>
+                        </a>
+                        <% if (isLinked) { %>
+                          <span class="mc-badge">You</span>
+                        <% } %>
+                      </td>
+                      <td data-title="Kits" class="mc-kits">
+                        <% if (stat.kits && stat.kits.length > 0) { %>
+                          <ul>
+                            <% stat.kits.forEach(kit => { %>
+                              <li><strong><%= kit.kit %></strong> — <span><%= kit.tier %></span></li>
+                            <% }) %>
+                          </ul>
+                        <% } else { %>
+                          <span class="mc-text-muted">No kits recorded</span>
+                        <% } %>
+                      </td>
+                      <td data-title="Points"><%= stat.total_points %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </main>
 
-                                                                                                          <section class="leaderboard-section">
-                                                                                                              <div class="card leaderboard-card">
-                                                                                                                  <table class="stats-table">
-                                                                                                                      <thead>
-                                                                                                                          <tr>
-                                                                                                                              <th>Rank</th>
-                                                                                                                              <th>Player</th>
-                                                                                                                              <th>Kits & Tiers</th>
-                                                                                                                              <th>Overall Points</th>
-                                                                                                                          </tr>
-                                                                                                                      </thead>
-                                                                                                                      <tbody>
-                                                                                                                          <% stats.forEach((stat, index) => {
-                                                                                                                              const isYou = userLinked && userLinked.some(l => l.game_username === stat.players?.username);
-                                                                                                                          %>
-                                                                                                                          <tr class="leaderboard-row <%= isYou ? 'highlight-row' : '' %>">
-                                                                                                                              <td class="rank-cell">#<%= index + 1 %></td>
-                                                                                                                              <td class="player-cell">
-                                                                                                                                  <a href="/profile/<%= stat.players?.username %>" class="player-link">
-                                                                                                                                      <% if (gameName === 'Minecraft') { %>
-                                                                                                                                          <img 
-                                                                                                                                              src="https://minotar.net/helm/<%= stat.players?.username %>/28.png" 
-                                                                                                                                              alt="<%= stat.players?.username %> head" 
-                                                                                                                                              class="player-head"
-                                                                                                                                              loading="lazy"
-                                                                                                                                          >
-                                                                                                                                      <% } %>
-                                                                                                                                      <span><%= stat.players?.username %></span>
-                                                                                                                                  </a>
-                                                                                                                                  <% if (isYou) { %>
-                                                                                                                                      <span class="you-badge">You</span>
-                                                                                                                                  <% } %>
-                                                                                                                              </td>
-                                                                                                                              <td class="kits-cell">
-                                                                                                                                  <% if (stat.kits && stat.kits.length) { %>
-                                                                                                                                      <span class="kit-list"><%= stat.kits.map(k => `${k.kit} (${k.tier})`).join(', ') %></span>
-                                                                                                                                  <% } else { %>
-                                                                                                                                      <em class="no-kits">No kits linked</em>
-                                                                                                                                  <% } %>
-                                                                                                                              </td>
-                                                                                                                              <td class="points-cell"><span class="points-value"><%= stat.total_points %></span></td>
-                                                                                                                          </tr>
-                                                                                                                          <% }) %>
-                                                                                                                      </tbody>
-                                                                                                                  </table>
-                                                                                                              </div>
-                                                                                                          </section>
+    <%- include('partials/footer') %>
 
-                                                                                                          <div id="playerModal" class="modal hidden">
-                                                                                                              <div class="modal-content card">
-                                                                                                                  <span id="closeModal" class="close">&times;</span>
-                                                                                                                  <div id="modalBody" class="modal-body"></div>
-                                                                                                              </div>
-                                                                                                          </div>
-                                                                                                      </main>
-
-                                                                                                      <footer class="footer">
-                                                                                                          <p>© <%= new Date().getFullYear() %> GameHub — All rights reserved.</p>
-                                                                                                      </footer>
-
-                                                                                                      <script>
-                                                                                                          // Existing JavaScript logic for search and modal, updated with new classes
-                                                                                                          const form = document.getElementById("playerSearchForm");
-                                                                                                          const modal = document.getElementById("playerModal");
-                                                                                                          const modalBody = document.getElementById("modalBody");
-                                                                                                          const closeModal = document.getElementById("closeModal");
-
-                                                                                                          form.addEventListener("submit", async (e) => {
-                                                                                                              e.preventDefault();
-                                                                                                              const query = document.getElementById("playerSearchInput").value.trim();
-
-                                                                                                              if (!query) return;
-
-                                                                                                              // Simple client-side redirection for a cleaner URL after search
-                                                                                                              window.location.href = `/profile/${encodeURIComponent(query)}?game=<%= gameName %>`;
-
-                                                                                                              // NOTE: The original code showed a modal for search, which is unusual for a leaderboard.
-                                                                                                              // I'm assuming you want to redirect to a full profile page for better UI.
-                                                                                                              // If you MUST keep the modal for search, uncomment the block below and comment out the redirection:
-
-                                                                                                              /*
-                                                                                                              // --- MODAL SEARCH LOGIC (if required) ---
-                                                                                                              const res = await fetch(`/api/player/<%= gameName %>?name=${encodeURIComponent(query)}`);
-                                                                                                              const data = await res.json();
-                                                                                                              const isMinecraft = "<%= gameName %>" === "Minecraft";
-                                                                                                              let playerHeadHtml = '';
-
-                                                                                                              if (isMinecraft && data.username) {
-                                                                                                                  playerHeadHtml = `<img src="https://minotar.net/helm/${data.username}/40.png" alt="${data.username} head" class="modal-player-head">`;
-                                                                                                              }
-
-                                                                                                              if (data.error) {
-                                                                                                                  modalBody.innerHTML = `<h3 class="modal-error">❌ ${data.error}</h3>`;
-                                                                                                              } else {
-                                                                                                                  modalBody.innerHTML = `
-                                                                                                                      <div class="modal-player-header">
-                                                                                                                          ${playerHeadHtml}
-                                                                                                                          <h2 class="modal-player-name">${data.username}</h2>
-                                                                                                                      </div>
-                                                                                                                      <div class="modal-stats-grid">
-                                                                                                                          <div class="stat-item"><strong>Overall Rank:</strong> <span class="stat-value">#${data.rank}</span></div>
-                                                                                                                          <div class="stat-item"><strong>Total Points:</strong> <span class="stat-value">${data.points}</span></div>
-                                                                                                                          <div class="stat-item full-width"><strong>Kits:</strong> <span>${
-                                                                                                                              data.kits && data.kits.length
-                                                                                                                                  ? data.kits.map(k => `${k.kit} (${k.tier})`).join(', ')
-                                                                                                                                  : '<em class="no-kits">No kits linked</em>'
-                                                                                                                          }</span></div>
-                                                                                                                      </div>
-                                                                                                                      <a href="/profile/${data.username}" class="profile-button">View Full Profile</a>
-                                                                                                                  `;
-                                                                                                              }
-
-                                                                                                              modal.classList.remove("hidden");
-                                                                                                              // ----------------------------------------
-                                                                                                              */
-                                                                                                          });
-
-                                                                                                          closeModal.addEventListener("click", () => modal.classList.add("hidden"));
-                                                                                                          window.addEventListener("click", (e) => {
-                                                                                                              if (e.target === modal) modal.classList.add("hidden");
-                                                                                                          });
-                                                                                                      </script>
-                                                                                                  </body>
-                                                                                                  </html>
+    <script>
+      const searchForm = document.getElementById('playerSearchForm');
+      const searchInput = document.getElementById('playerSearchInput');
+      searchForm?.addEventListener('submit', event => {
+        event.preventDefault();
+        const value = searchInput?.value.trim();
+        if (!value) return;
+        window.location.href = `/profile/${encodeURIComponent(value)}`;
+      });
+    </script>
+  </body>
+</html>
