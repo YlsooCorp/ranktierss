@@ -1,78 +1,188 @@
-                                          <!DOCTYPE html>
-                                          <html lang="en">
-                                          <head>
-                                            <meta charset="UTF-8">
-                                            <title><%= player.username %> | Profile</title>
-                                            <link rel="stylesheet" href="/styles.css">
-                                          </head>
-                                          <body>
-                                          <header class="navbar">
-                                            <h1 class="logo"><a href="/">RankTiers</a></h1>
-                                            <nav>
-                                              <% if (user) { %>
-                                                <a href="/account">Account</a>
-                                                <a href="/logout" class="logout">Logout</a>
-                                              <% } else { %>
-                                                <a href="/login">Login</a>
-                                                <a href="/register">Register</a>
-                                              <% } %>
-                                            </nav>
-                                          </header>
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: typeof navActive !== 'undefined' ? navActive : null }) %>
 
-                                          <main class="profile-page">
-                                            <section class="profile-header">
-                                              <% if (mcUUID) { %>
-                                                <img class="profile-head" src="https://crafatar.com/avatars/<%= mcUUID %>?size=128" alt="Player head">
-                                              <% } %>
-                                              <div>
-                                                <h2><%= player.username %></h2>
-                                                <p class="overall">Total Points: <strong><%= totalPoints %></strong></p>
-                                              </div>
-                                            </section>
+    <main class="mc-main">
+      <section class="mc-section">
+        <div class="mc-container">
+          <% const minecraftStats = (stats || []).filter(stat => stat.game && stat.game.toLowerCase() === 'minecraft'); %>
+          <% const displayStats = minecraftStats.length > 0 ? minecraftStats : stats; %>
 
-                                            <!-- Stats -->
-                                            <section class="stats-card">
-                                              <h3>Game Stats</h3>
-                                              <% if (stats.length > 0) { %>
-                                                <table class="stats-table">
-                                                  <thead>
-                                                    <tr><th>Game</th><th>Kit</th><th>Tier</th><th>Points</th></tr>
-                                                  </thead>
-                                                  <tbody>
-                                                    <% stats.forEach(s => { %>
-                                                      <tr>
-                                                        <td><%= s.game %></td>
-                                                        <td><%= s.kit %></td>
-                                                        <td><%= s.tier %></td>
-                                                        <td><%= s.points %></td>
-                                                      </tr>
-                                                    <% }) %>
-                                                  </tbody>
-                                                </table>
-                                              <% } else { %>
-                                                <p>No stats yet.</p>
-                                              <% } %>
-                                            </section>
+          <header class="mc-profile mc-card">
+            <div class="mc-profile__figure">
+              <% if (mcRenderUrl) { %>
+                <img
+                  src="<%= mcRenderUrl %>"
+                  alt="<%= (player.minecraft_username || player.username) %> Minecraft skin"
+                  class="mc-profile__render"
+                  loading="lazy"
+                />
+              <% } else { %>
+                <div class="mc-profile__placeholder"><%= player.username.charAt(0).toUpperCase() %></div>
+              <% } %>
+            </div>
+            <div class="mc-profile__body">
+              <p class="mc-tag">Minecraft Player</p>
+              <h1 class="mc-heading"><%= player.username %></h1>
+              <p class="mc-text-muted">
+                Grinding the Emerald ladder with <strong><%= totalPoints %></strong> total points.
+              </p>
 
-                                            <!-- Achievements -->
-                                            <section class="achievements-card">
-                                              <h3>Achievements</h3>
-                                              <% if (achievements && achievements.length > 0) { %>
-                                                <div class="achievements-grid">
-                                                  <% achievements.forEach(a => { %>
-                                                    <div class="achievement">
-                                                      <% if (a.achievements.icon) { %>
-                                                        <img src="<%= a.achievements.icon %>" alt="<%= a.achievements.name %>">
-                                                      <% } %>
-                                                      <h4><%= a.achievements.name %></h4>
-                                                      <p><%= a.achievements.description %></p>
-                                                    </div>
-                                                  <% }) %>
-                                                </div>
-                                              <% } else { %>
-                                                <p class="empty">No achievements yet.</p>
-                                              <% } %>
-                                            </section>
-                                          </main>
-                                          </body>
-                                          </html>
+              <% const kitCount = (displayStats && displayStats.length) || 0; %>
+              <% const totalWins = (eventRecords || []).reduce((sum, record) => sum + (record.wins || 0), 0); %>
+              <% const totalLosses = (eventRecords || []).reduce((sum, record) => sum + (record.losses || 0), 0); %>
+              <% const achievementCount = (achievements && achievements.length) || 0; %>
+
+              <div class="mc-profile__summary">
+                <div class="mc-profile__summary-item">
+                  <span class="mc-profile__summary-value"><%= totalPoints %></span>
+                  <span class="mc-profile__summary-label">Ladder Points</span>
+                </div>
+                <div class="mc-profile__summary-item">
+                  <span class="mc-profile__summary-value"><%= kitCount %></span>
+                  <span class="mc-profile__summary-label">Kits Verified</span>
+                </div>
+                <div class="mc-profile__summary-item">
+                  <span class="mc-profile__summary-value"><%= totalWins %>W - <%= totalLosses %>L</span>
+                  <span class="mc-profile__summary-label">Event Record</span>
+                </div>
+                <div class="mc-profile__summary-item">
+                  <span class="mc-profile__summary-value"><%= achievementCount %></span>
+                  <span class="mc-profile__summary-label">Achievements</span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <section class="mc-section mc-section--tight">
+            <header class="mc-section__header">
+              <h2 class="mc-heading">Minecraft Kits</h2>
+              <p class="mc-text-muted">All verified kits and tiers for this player.</p>
+            </header>
+            <% if (displayStats && displayStats.length > 0) { %>
+              <div class="mc-card mc-card--table">
+                <table class="mc-table">
+                  <thead>
+                    <tr>
+                      <th>Kit</th>
+                      <th>Tier</th>
+                      <th>Points</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% displayStats.forEach(stat => { const kitIcon = kitTextures && kitTextures[stat.kit]; %>
+                      <tr>
+                        <td data-title="Kit">
+                          <span class="mc-kit-label">
+                            <% if (kitIcon) { %>
+                              <img
+                                src="<%= kitIcon %>"
+                                alt="<%= stat.kit %> kit icon"
+                                class="mc-kit-icon"
+                                loading="lazy"
+                              />
+                            <% } %>
+                            <span><%= stat.kit %></span>
+                          </span>
+                        </td>
+                        <td data-title="Tier"><%= stat.tier %></td>
+                        <td data-title="Points"><%= stat.points %></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            <% } else { %>
+              <div class="mc-empty mc-card">
+                <h3>No kits yet</h3>
+                <p>This player hasn't recorded any Minecraft kits.</p>
+              </div>
+            <% } %>
+          </section>
+
+          <section class="mc-section mc-section--tight">
+            <header class="mc-section__header">
+              <h2 class="mc-heading">Event Record</h2>
+              <p class="mc-text-muted">Wins and losses from official Emerald Cup brackets.</p>
+            </header>
+            <% if (eventRecords && eventRecords.length > 0) { %>
+              <div class="mc-card mc-card--table">
+                <table class="mc-table">
+                  <thead>
+                    <tr>
+                      <th>Event</th>
+                      <th>Kit</th>
+                      <th>Wins</th>
+                      <th>Losses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% eventRecords.forEach(record => { const kitName = record.events ? record.events.kit : null; const kitIcon = kitName && kitTextures ? kitTextures[kitName] : null; %>
+                      <tr>
+                        <td data-title="Event"><%= record.events ? record.events.name : `Event #${record.event_id}` %></td>
+                        <td data-title="Kit">
+                          <% if (kitName) { %>
+                            <span class="mc-kit-label">
+                              <% if (kitIcon) { %>
+                                <img
+                                  src="<%= kitIcon %>"
+                                  alt="<%= kitName %> kit icon"
+                                  class="mc-kit-icon"
+                                  loading="lazy"
+                                />
+                              <% } %>
+                              <span><%= kitName %></span>
+                            </span>
+                          <% } else { %>
+                            -
+                          <% } %>
+                        </td>
+                        <td data-title="Wins"><%= record.wins || 0 %></td>
+                        <td data-title="Losses"><%= record.losses || 0 %></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            <% } else { %>
+              <div class="mc-empty mc-card">
+                <h3>No event matches</h3>
+                <p>This player hasn't appeared in a tracked tournament yet.</p>
+              </div>
+            <% } %>
+          </section>
+
+          <section class="mc-section mc-section--tight">
+            <header class="mc-section__header">
+              <h2 class="mc-heading">Achievements</h2>
+              <p class="mc-text-muted">Milestones unlocked across the Minecraft ladder.</p>
+            </header>
+            <% if (achievements && achievements.length > 0) { %>
+              <div class="mc-grid mc-grid--achievements">
+                <% achievements.forEach(item => { const achievement = item.achievements; %>
+                  <article class="mc-card mc-achievement">
+                    <% if (achievement && achievement.icon) { %>
+                      <img src="<%= achievement.icon %>" alt="<%= achievement.name %> icon" loading="lazy" />
+                    <% } %>
+                    <h3><%= achievement ? achievement.name : 'Achievement' %></h3>
+                    <p><%= achievement ? achievement.description : '' %></p>
+                  </article>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <div class="mc-empty mc-card">
+                <h3>No achievements unlocked</h3>
+                <p>Earn achievements by placing in tournaments and climbing the tiers.</p>
+              </div>
+            <% } %>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
+</html>
