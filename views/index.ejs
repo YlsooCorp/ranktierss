@@ -1,49 +1,133 @@
-                              <!DOCTYPE html>
-                              <html lang="en">
-                              <head>
-                                <meta charset="UTF-8">
-                                <title>RankTiers</title>
-                                <link rel="stylesheet" href="/styles.css">
-                              </head>
-                              <body>
-                                <header class="navbar">
-                                  <h1 class="logo"><a href="/">RankTiers</a></h1>
-                                  <nav>
-                                    <% if (user) { %>
-                                      <a href="/account">Account</a>
-                                      <a href="/logout" class="logout">Logout</a>
-                                    <% } else { %>
-                                      <a href="/login">Login</a>
-                                      <a href="/register">Register</a>
-                                    <% } %>
-                                  </nav>
-                                </header>
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: typeof navActive !== 'undefined' ? navActive : null }) %>
 
-                                <main class="content">
-                                  <section class="hero">
-                                    <h2>Track Your Skill Across All Games</h2>
-                                    <p>See where you rank in Minecraft, Clash Royale, and more.</p>
-                                  </section>
+    <main class="mc-main">
+      <section class="mc-hero">
+        <div class="mc-container mc-hero__grid">
+          <div class="mc-hero__content">
+            <p class="mc-tag">Minecraft Competitive Ladder</p>
+            <h1 class="mc-hero__title">Climb the Emerald Ranks</h1>
+            <p class="mc-hero__subtitle">
+              RankTiers focuses entirely on Minecraft PvP. Track placements for every kit, follow official
+events, and prove your skill with verified evidence.
+            </p>
+            <div class="mc-hero__actions">
+              <a class="mc-button mc-button--accent" href="/game/Minecraft">View Leaderboard</a>
+              <a class="mc-button mc-button--ghost" href="/events">Browse Events</a>
+              <button
+                class="mc-button mc-button--outline"
+                type="button"
+                data-copy-text="<%= minecraftServerIp %>"
+                data-toast="Server IP copied!"
+              >
+                Copy Server IP
+              </button>
+            </div>
+            <% const minecraftAccount = (linkedAccounts || []).find(acc => acc.game?.toLowerCase() === 'minecraft'); %>
+            <div class="mc-hero__status mc-card">
+              <% if (currentUser && minecraftAccount) { %>
+                <h3>Linked as <span><%= minecraftAccount.game_username %></span></h3>
+                <p>Your profile is ready for tournament placements and tier submissions.</p>
+              <% } else if (currentUser) { %>
+                <h3>Link your Minecraft IGN</h3>
+                <p>Connect your account to appear on the leaderboard and qualify for events.</p>
+                <a class="mc-pill" href="/account">Link Account</a>
+              <% } else { %>
+                <h3>Join the Ladder</h3>
+                <p>Create an account to start climbing competitive Minecraft tiers.</p>
+                <a class="mc-pill" href="/register">Create Account</a>
+              <% } %>
+            </div>
+            <div class="mc-hero__ip mc-card">
+              <div class="mc-hero__ip-header">
+                <h3>Server IP</h3>
+                <span class="mc-tag mc-tag--subtle">Always online</span>
+              </div>
+              <div class="mc-hero__ip-body">
+                <code><%= minecraftServerIp %></code>
+                <button
+                  type="button"
+                  class="mc-pill mc-pill--accent"
+                  data-copy-text="<%= minecraftServerIp %>"
+                  data-toast="Server IP copied!"
+                >
+                  Copy
+                </button>
+              </div>
+              <p class="mc-text-muted">Hop on to scrim, practise kits, and secure stat-tracked wins.</p>
+            </div>
+          </div>
 
-                                  <section class="games-grid">
-                                    <% games.forEach(game => { %>
-                                      <a href="/game/<%= game.name %>" class="game-card">
-                                        <div class="game-card-content">
-                                          <h3><%= game.name %></h3>
-                                          <% const linked = linkedAccounts.find(acc => acc.game === game.name); %>
-                                          <% if (linked) { %>
-                                            <p class="linked">Linked as <b><%= linked.game_username %></b></p>
-                                          <% } else { %>
-                                            <p class="not-linked">Not Linked</p>
-                                          <% } %>
-                                        </div>
-                                      </a>
-                                    <% }) %>
-                                  </section>
-                                </main>
+          <aside class="mc-hero__preview mc-card">
+            <div class="mc-hero__badge">Featured Ladder</div>
+            <h3>Minecraft Kits</h3>
+            <p>Balanced competitive ladders tuned for duels, sky battles, and custom kit metas.</p>
+            <ul class="mc-list">
+              <li>Real-time points and tier updates</li>
+              <li>Event performance tracked automatically</li>
+              <li>Discord notifications for promotions</li>
+            </ul>
+            <a class="mc-pill mc-pill--accent" href="/submit">Submit Proof</a>
+            <% if (upcomingEvent) { const heroEventIcon = upcomingEventTextures && upcomingEventTextures[upcomingEvent.kit]; %>
+              <div class="mc-hero__event">
+                <div class="mc-hero__event-heading">
+                  <h4>Next Event</h4>
+                  <% if (heroEventIcon) { %>
+                    <img src="<%= heroEventIcon %>" alt="<%= upcomingEvent.kit %> kit" loading="lazy" />
+                  <% } %>
+                </div>
+                <p class="mc-hero__event-name"><%= upcomingEvent.name %></p>
+                <p class="mc-text-muted">Kit: <%= upcomingEvent.kit %></p>
+                <a class="mc-button mc-button--ghost" href="/events/<%= upcomingEvent.id %>">View bracket</a>
+              </div>
+            <% } %>
+          </aside>
+        </div>
+      </section>
 
-                                <footer>
-                                  <p>© 2025 RankTiers. All rights reserved.</p>
-                                </footer>
-                              </body>
-                              </html>
+      <section class="mc-section">
+        <div class="mc-container">
+          <header class="mc-section__header">
+            <h2 class="mc-heading">Minecraft Ladder Overview</h2>
+            <p class="mc-text-muted">Every placement you see below comes from verified Minecraft PvP gameplay.</p>
+          </header>
+          <div class="mc-grid mc-grid--games">
+            <% games.forEach(game => { %>
+              <article class="mc-card mc-game-card">
+                <div class="mc-game-card__banner">Minecraft</div>
+                <div class="mc-game-card__body">
+                  <h3><%= game.name %></h3>
+                  <p>Browse tier placements across duel kits, bridge matchups, and event lineups.</p>
+                  <a class="mc-button mc-button--accent" href="/game/<%= encodeURIComponent(game.name) %>">Open Leaderboard</a>
+                </div>
+              </article>
+            <% }) %>
+          </div>
+        </div>
+      </section>
+
+      <section class="mc-section mc-section--alt">
+        <div class="mc-container mc-feature-grid">
+          <article class="mc-card mc-feature">
+            <h3>Seasonal Events</h3>
+            <p>Emerald Cup tournaments automatically generate balanced brackets for every tier.</p>
+          </article>
+          <article class="mc-card mc-feature">
+            <h3>Evidence-Driven</h3>
+            <p>Upload match recordings or screenshots and let admins verify your promotion instantly.</p>
+          </article>
+          <article class="mc-card mc-feature">
+            <h3>Profile Insights</h3>
+            <p>Track wins, losses, and tier history on a personalized Minecraft player profile.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
+</html>
