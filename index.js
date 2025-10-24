@@ -498,6 +498,76 @@ app.get("/events/:id", async (req, res) => {
   });
 });
 
+app.get("/terms", (req, res) => {
+  res.render("terms", { user: req.session.user || null });
+});
+
+app.get("/privacy", (req, res) => {
+  res.render("privacy", { user: req.session.user || null });
+});
+
+app.get("/events", async (req, res) => {
+  let events = [];
+  let eventsError = null;
+
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select("id, name, game, kit, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    events = data || [];
+  } catch (error) {
+    console.error("Failed to load events", error);
+    eventsError = "Unable to load events right now. Please try again later.";
+  }
+
+  res.render("events", {
+    events,
+    eventsError,
+    user: req.session.user || null,
+  });
+});
+
+app.get("/events/:id", async (req, res) => {
+  const eventId = req.params.id;
+  const { data: event, error: eventError } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
+  if (eventError) {
+    console.error("Failed to fetch event", eventError);
+    return res.status(500).send("Unable to load event.");
+  }
+  if (!event) return res.status(404).send("Event not found");
+
+  const bracket = parseBracket(event.bracket);
+  let eventRecords = [];
+  let viewError = null;
+
+  const { data: records, error: recordsError } = await supabase
+    .from("player_event_records")
+    .select("player_id, wins, losses, players(username)")
+    .eq("event_id", eventId);
+
+  if (recordsError) {
+    console.error("Failed to fetch event records", recordsError);
+    viewError = "Participant records are temporarily unavailable.";
+  } else if (records) {
+    eventRecords = records;
+  }
+
+  res.render("event", {
+    event,
+    bracket,
+    adminView: false,
+    records: eventRecords,
+    adminMessage: null,
+    adminError: null,
+    eventError: viewError,
+    user: req.session.user || null,
+    admin: req.session.admin || null,
+  });
+});
+
 app.get("/game/:name", async (req, res) => {
   const { name } = req.params;
   const { data: allStats } = await supabase
