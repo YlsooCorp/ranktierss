@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: null }) %>
+
+    <main class="mc-main">
+      <section class="mc-section">
+        <div class="mc-container mc-legal">
+          <header class="mc-section__header">
+            <p class="mc-tag">Legal</p>
+            <h1 class="mc-heading">Terms of Service</h1>
+            <p class="mc-text-muted">The rules for using RankTiers across the Minecraft ladder and event platform.</p>
+          </header>
+
+          <article class="mc-card mc-legal__content">
+            <p>
+              Welcome to RankTiers. By accessing or using our website, Discord bot, or related services, you agree to the
+              terms outlined below. If you do not agree, please refrain from using the service.
+            </p>
+
+            <h2>Use of the Service</h2>
+            <p>
+              RankTiers is dedicated to competitive Minecraft. You agree to engage respectfully, submit accurate evidence,
+              and avoid any actions that disrupt other players’ experiences. We may suspend or terminate access for misuse.
+            </p>
+
+            <h2>Account Responsibilities</h2>
+            <p>
+              Keep your login credentials secure. You are responsible for all activity that happens under your account.
+              Contact us immediately if you believe your account has been compromised.
+            </p>
+
+            <h2>Submitted Content</h2>
+            <p>
+              By submitting stats, screenshots, or other media, you confirm you have the right to share the content and grant
+              RankTiers permission to store and display it as part of the ladder.
+            </p>
+
+            <h2>Updates to These Terms</h2>
+            <p>
+              We may update these terms periodically. The “Last updated” date reflects the latest revision. Continuing to
+              use RankTiers after changes are posted means you accept the new terms.
+            </p>
+
+            <p class="mc-text-muted">Last updated: February 12, 2025</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
+</html>

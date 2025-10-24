@@ -1,23 +1,60 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Submit Stats - RankTiers</title>
-  <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-  <header class="container"><a href="/">&larr; Home</a></header>
-  <main class="container">
-    <h2>Submit Your Stats</h2>
-    <% if (error) { %><p class="error"><%= error %></p><% } %>
-    <% if (success) { %><p class="success"><%= success %></p><% } %>
-    <form action="/submit" method="post" enctype="multipart/form-data">
-      <label>Player Name: <input type="text" name="player_name" required></label><br>
-      <label>Game: <input type="text" name="game" required></label><br>
-      <label>Points: <input type="number" name="points" required></label><br>
-      <label>Screenshot: <input type="file" name="screenshot" accept="image/*"></label><br>
-      <button type="submit">Submit</button>
-    </form>
-  </main>
-</body>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: typeof navActive !== 'undefined' ? navActive : null }) %>
+
+    <main class="mc-main">
+      <section class="mc-section">
+        <div class="mc-container">
+          <header class="mc-section__header">
+            <p class="mc-tag">Submit Proof</p>
+            <h1 class="mc-heading">Request a Tier Update</h1>
+            <p class="mc-text-muted">Upload evidence for your Minecraft match and let our admins verify the result.</p>
+          </header>
+
+          <% if (error) { %>
+            <div class="mc-notice mc-notice--error"><%= error %></div>
+          <% } %>
+          <% if (success) { %>
+            <div class="mc-notice mc-notice--success"><%= success %></div>
+          <% } %>
+
+          <form class="mc-card mc-form" action="/submit" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="game" value="Minecraft" />
+
+            <label for="player_name">Minecraft IGN</label>
+            <input id="player_name" class="mc-input" type="text" name="player_name" placeholder="Technoblade" required />
+
+            <label for="kit">Kit</label>
+            <input id="kit" class="mc-input" type="text" name="kit" placeholder="Crystal Duels" required />
+
+            <% const tiers = ['LT5','HT5','LT4','HT4','LT3','HT3','LT2','HT2','LT1','HT1']; %>
+            <label for="tier">Tier</label>
+            <select id="tier" class="mc-input" name="tier" required>
+              <option value="">Select tier</option>
+              <% tiers.forEach(tierValue => { %>
+                <option value="<%= tierValue %>"><%= tierValue %></option>
+              <% }) %>
+            </select>
+
+            <label for="points">Points</label>
+            <input id="points" class="mc-input" type="number" name="points" min="0" placeholder="150" required />
+
+            <label for="screenshot">Proof Screenshot (optional)</label>
+            <input id="screenshot" class="mc-input" type="file" name="screenshot" accept="image/*" />
+
+            <p class="mc-text-muted">We also accept video links in the description field below.</p>
+            <label for="notes">Notes (optional)</label>
+            <textarea id="notes" class="mc-input mc-input--textarea" name="notes" placeholder="Include match details or video links."></textarea>
+
+            <button class="mc-button mc-button--accent" type="submit">Submit Request</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
 </html>
