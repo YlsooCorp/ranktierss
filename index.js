@@ -122,6 +122,22 @@ function buildBracket(players) {
   return { rounds };
 }
 
+async function fetchPlayersByIds(ids = []) {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+
+  const chunkSize = 99;
+  const players = [];
+
+  for (let index = 0; index < ids.length; index += chunkSize) {
+    const chunk = ids.slice(index, index + chunkSize);
+    const { data, error } = await supabase.from("players").select("id, username").in("id", chunk);
+    if (error) throw new Error(`Failed to load player profiles: ${error.message}`);
+    if (data) players.push(...data);
+  }
+
+  return players;
+}
+
 function indexBracketMatches(bracket) {
   const map = new Map();
   if (!bracket || !Array.isArray(bracket.rounds)) return map;
@@ -825,12 +841,7 @@ app.post("/admin/events/create", requireAdmin, async (req, res) => {
       return res.redirect("/admin/dashboard");
     }
 
-    const { data: playersLookup, error: playersError } = await supabase
-      .from("players")
-      .select("id, username")
-      .in("id", uniquePlayerIds);
-
-    if (playersError) throw new Error(`Failed to load player profiles: ${playersError.message}`);
+    const playersLookup = await fetchPlayersByIds(uniquePlayerIds);
 
     const usernameMap = new Map();
     (playersLookup || []).forEach(player => {
@@ -885,11 +896,11 @@ app.post("/admin/events/create", requireAdmin, async (req, res) => {
     if (recordsError) throw new Error(`Failed to initialize event records: ${recordsError.message}`);
 
     req.session.adminMessage = `Event "${name}" created successfully.`;
-    res.redirect(`/admin/events/${createdEvent.id}`);
+    return res.redirect(`/admin/events/${createdEvent.id}`);
   } catch (error) {
     console.error("Failed to create event", error);
-    req.session.adminError = "Failed to create event. Please try again.";
-    res.redirect("/admin/dashboard");
+    req.session.adminError = error?.message ? `Failed to create event: ${error.message}` : "Failed to create event. Please try again.";
+    return res.redirect("/admin/dashboard");
   }
 });
 
