@@ -13,10 +13,10 @@
 
           <header class="mc-profile mc-card">
             <div class="mc-profile__figure">
-              <% if (mcUUID) { %>
+              <% if (mcRenderUrl) { %>
                 <img
-                  src="https://crafatar.com/renders/body/<%= mcUUID %>?size=256&overlay"
-                  alt="<%= player.username %> full skin"
+                  src="<%= mcRenderUrl %>"
+                  alt="<%= (player.minecraft_username || player.username) %> Minecraft skin"
                   class="mc-profile__render"
                   loading="lazy"
                 />
@@ -73,9 +73,21 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <% displayStats.forEach(stat => { %>
+                    <% displayStats.forEach(stat => { const kitIcon = kitTextures && kitTextures[stat.kit]; %>
                       <tr>
-                        <td data-title="Kit"><%= stat.kit %></td>
+                        <td data-title="Kit">
+                          <span class="mc-kit-label">
+                            <% if (kitIcon) { %>
+                              <img
+                                src="<%= kitIcon %>"
+                                alt="<%= stat.kit %> kit icon"
+                                class="mc-kit-icon"
+                                loading="lazy"
+                              />
+                            <% } %>
+                            <span><%= stat.kit %></span>
+                          </span>
+                        </td>
                         <td data-title="Tier"><%= stat.tier %></td>
                         <td data-title="Points"><%= stat.points %></td>
                       </tr>
@@ -108,10 +120,26 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <% eventRecords.forEach(record => { %>
+                    <% eventRecords.forEach(record => { const kitName = record.events ? record.events.kit : null; const kitIcon = kitName && kitTextures ? kitTextures[kitName] : null; %>
                       <tr>
                         <td data-title="Event"><%= record.events ? record.events.name : `Event #${record.event_id}` %></td>
-                        <td data-title="Kit"><%= record.events ? record.events.kit : '-' %></td>
+                        <td data-title="Kit">
+                          <% if (kitName) { %>
+                            <span class="mc-kit-label">
+                              <% if (kitIcon) { %>
+                                <img
+                                  src="<%= kitIcon %>"
+                                  alt="<%= kitName %> kit icon"
+                                  class="mc-kit-icon"
+                                  loading="lazy"
+                                />
+                              <% } %>
+                              <span><%= kitName %></span>
+                            </span>
+                          <% } else { %>
+                            -
+                          <% } %>
+                        </td>
                         <td data-title="Wins"><%= record.wins || 0 %></td>
                         <td data-title="Losses"><%= record.losses || 0 %></td>
                       </tr>

@@ -241,6 +241,68 @@ async function getMinecraftUUID(username) {
   }
 }
 
+function buildMinecraftRenderUrl(uuid, username) {
+  if (uuid) {
+    const normalized = uuid.replace(/-/g, "");
+    return `https://crafatar.com/renders/body/${normalized}?size=256&overlay`;
+  }
+  if (username) {
+    return `https://minotar.net/armor/body/${encodeURIComponent(username)}/256.png`;
+  }
+  return null;
+}
+
+const KIT_TEXTURE_BASE =
+  "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.1/assets/minecraft/textures";
+const KIT_TEXTURE_FALLBACK = `${KIT_TEXTURE_BASE}/item/netherite_sword.png`;
+
+const kitTextureRules = [
+  { match: /(archer|bow|ranger|sniper)/i, path: "item/bow.png" },
+  { match: /(tank|guardian|heavy|knight)/i, path: "item/netherite_chestplate.png" },
+  { match: /(mage|wizard|spell|sorcerer)/i, path: "item/blaze_powder.png" },
+  { match: /(healer|support|medic|paladin)/i, path: "item/golden_apple.png" },
+  { match: /(rogue|assassin|ninja)/i, path: "item/iron_sword.png" },
+  { match: /(axe)/i, path: "item/diamond_axe.png" },
+  { match: /(shield)/i, path: "item/shield.png" },
+  { match: /(pickaxe|miner|builder|bridge)/i, path: "item/diamond_pickaxe.png" },
+  { match: /(rod)/i, path: "item/fishing_rod.png" },
+  { match: /(uhc|survivalist)/i, path: "item/golden_apple.png" },
+  { match: /(sumo)/i, path: "item/slime_ball.png" },
+  { match: /(crystal)/i, path: "item/end_crystal.png" },
+  { match: /(pearl|ender)/i, path: "item/ender_pearl.png" },
+  { match: /(sky|elytra|flight)/i, path: "item/elytra.png" },
+  { match: /(bedwars|bed defender|bed)/i, path: "item/red_bed.png" },
+  { match: /(pot|potion)/i, path: "item/potion_bottle_splash.png" },
+  { match: /(combo|duel|pvp|sword|classic)/i, path: "item/diamond_sword.png" },
+];
+
+function resolveKitTexturePath(kitName = "") {
+  const normalized = typeof kitName === "string" ? kitName.trim() : "";
+  if (!normalized) return "item/netherite_sword.png";
+  for (const rule of kitTextureRules) {
+    if (rule.match.test(normalized)) return rule.path;
+  }
+  return "item/netherite_sword.png";
+}
+
+function resolveKitTextureUrl(kitName = "") {
+  try {
+    const path = resolveKitTexturePath(kitName);
+    return `${KIT_TEXTURE_BASE}/${path}`;
+  } catch (err) {
+    console.error("Error resolving kit texture", kitName, err);
+    return KIT_TEXTURE_FALLBACK;
+  }
+}
+
+function buildKitTextureMap(names = []) {
+  return names.reduce((acc, name) => {
+    if (!name || acc[name]) return acc;
+    acc[name] = resolveKitTextureUrl(name);
+    return acc;
+  }, {});
+}
+
 function requireAuth(req, res, next) {
   if (!req.session.user) return res.redirect("/login");
   next();
@@ -451,9 +513,12 @@ app.get("/events", async (req, res) => {
     eventsError = "Unable to load events right now. Please try again later.";
   }
 
+  const kitTextures = buildKitTextureMap((events || []).map(event => event.kit).filter(Boolean));
+
   res.render("events", {
     events,
     eventsError,
+    kitTextures,
     pageTitle: "Events",
     navActive: "events",
   });
@@ -495,6 +560,7 @@ app.get("/events/:id", async (req, res) => {
     admin: req.session.admin || null,
     pageTitle: event.name,
     navActive: "events",
+    kitTexture: event.kit ? resolveKitTextureUrl(event.kit) : null,
   });
 });
 
@@ -510,6 +576,7 @@ app.get("/game/:name", async (req, res) => {
       stats: [],
       gameName: name,
       userLinked: [],
+      kitTextures: {},
       pageTitle: `${name} Leaderboard`,
       navActive: "leaderboard",
     });
@@ -522,6 +589,13 @@ app.get("/game/:name", async (req, res) => {
     map[pid].kits.push({ kit: stat.kit, tier: stat.tier });
   });
   const stats = Object.values(map).sort((a, b) => b.total_points - a.total_points);
+
+  const kitNames = new Set();
+  stats.forEach(entry => {
+    (entry.kits || []).forEach(kit => {
+      if (kit?.kit) kitNames.add(kit.kit);
+    });
+  });
 
   let userLinked = [];
   if (req.session.user) {
@@ -537,6 +611,7 @@ app.get("/game/:name", async (req, res) => {
     stats,
     gameName: name,
     userLinked,
+    kitTextures: buildKitTextureMap([...kitNames]),
     pageTitle: `${name} Leaderboard`,
     navActive: "leaderboard",
   });
@@ -564,18 +639,33 @@ app.get("/profile/:username", async (req, res) => {
     .select("event_id, wins, losses, events(name, game, kit)")
     .eq("player_id", player.id);
 
-  const hasMinecraft = stats.some(s => s.game.toLowerCase() === "minecraft");
-  let mcUUID = null;
-  if (hasMinecraft) mcUUID = await getMinecraftUUID(username);
+  const hasMinecraft = (stats || []).some(s => s.game.toLowerCase() === "minecraft");
+  const minecraftLookupName = player.minecraft_username || username;
+  let mcRenderUrl = null;
+  if (hasMinecraft) {
+    if (player.minecraft_uuid) {
+      mcRenderUrl = buildMinecraftRenderUrl(player.minecraft_uuid, minecraftLookupName);
+    } else {
+      const resolvedUUID = await getMinecraftUUID(minecraftLookupName);
+      mcRenderUrl = buildMinecraftRenderUrl(resolvedUUID, minecraftLookupName);
+    }
+  }
 
-  const totalPoints = stats.reduce((a, s) => a + s.points, 0);
+  const kitNames = new Set((stats || []).map(stat => stat.kit).filter(Boolean));
+  (eventRecords || []).forEach(record => {
+    const kit = record?.events?.kit;
+    if (kit) kitNames.add(kit);
+  });
+
+  const totalPoints = (stats || []).reduce((a, s) => a + s.points, 0);
   res.render("profile", {
     player,
     stats: stats || [],
     achievements: achievements || [],
-    mcUUID,
+    mcRenderUrl,
     totalPoints,
     eventRecords: eventRecords || [],
+    kitTextures: buildKitTextureMap([...kitNames]),
     pageTitle: `${player.username} | Profile`,
     navActive: null,
   });

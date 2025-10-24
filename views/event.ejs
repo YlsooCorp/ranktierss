@@ -19,7 +19,27 @@
           <header class="mc-section__header">
             <p class="mc-tag">Minecraft Event</p>
             <h1 class="mc-heading"><%= event.name %></h1>
-            <p class="mc-text-muted">Kit: <strong><%= event.kit %></strong> • Game: <strong><%= event.game %></strong></p>
+            <p class="mc-text-muted mc-kit-detail">
+              <% if (event.kit) { %>
+                <span class="mc-kit-label">
+                  <% if (kitTexture) { %>
+                    <img
+                      src="<%= kitTexture %>"
+                      alt="<%= event.kit %> kit icon"
+                      class="mc-kit-icon"
+                      loading="lazy"
+                    />
+                  <% } %>
+                  <span><strong><%= event.kit %></strong> Kit</span>
+                </span>
+              <% } %>
+              <% if (event.kit && event.game) { %>
+                <span class="mc-kit-detail__divider">•</span>
+              <% } %>
+              <% if (event.game) { %>
+                <span class="mc-kit-detail__game">Game: <strong><%= event.game %></strong></span>
+              <% } %>
+            </p>
             <% if (event.tiers && event.tiers.length > 0) { %>
               <p class="mc-text-muted">Tiers: <%= event.tiers.join(', ') %></p>
             <% } %>

@@ -37,8 +37,18 @@
           <% if (kitNames.length > 0) { %>
             <div class="mc-kit-strip">
               <span class="mc-kit-strip__label">Kits</span>
-              <% kitNames.forEach(name => { %>
-                <span class="mc-kit-chip"><%= name %></span>
+              <% kitNames.forEach(name => { const kitIcon = kitTextures && kitTextures[name]; %>
+                <span class="mc-kit-chip">
+                  <% if (kitIcon) { %>
+                    <img
+                      src="<%= kitIcon %>"
+                      alt="<%= name %> kit icon"
+                      class="mc-kit-chip__icon"
+                      loading="lazy"
+                    />
+                  <% } %>
+                  <span><%= name %></span>
+                </span>
               <% }) %>
             </div>
           <% } %>
@@ -88,9 +98,19 @@
                       <td data-title="Loadout" class="mc-kits">
                         <% if (stat.kits && stat.kits.length > 0) { %>
                           <ul>
-                            <% stat.kits.forEach(kit => { %>
+                            <% stat.kits.forEach(kit => { const kitIcon = kitTextures && kitTextures[kit.kit]; %>
                               <li>
-                                <span class="mc-kit-name"><%= kit.kit %></span>
+                                <span class="mc-kit-name">
+                                  <% if (kitIcon) { %>
+                                    <img
+                                      src="<%= kitIcon %>"
+                                      alt="<%= kit.kit %> kit icon"
+                                      class="mc-kit-icon"
+                                      loading="lazy"
+                                    />
+                                  <% } %>
+                                  <span><%= kit.kit %></span>
+                                </span>
                                 <span class="mc-kit-tier"><%= kit.tier %></span>
                               </li>
                             <% }) %>
