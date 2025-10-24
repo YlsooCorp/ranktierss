@@ -30,6 +30,19 @@
 
       <section class="mc-section">
         <div class="mc-container">
+          <% const kitNames = Array.from(
+              new Set((stats || []).flatMap(entry => (entry.kits || []).map(kit => kit.kit)))
+            ).slice(0, 14); %>
+
+          <% if (kitNames.length > 0) { %>
+            <div class="mc-kit-strip">
+              <span class="mc-kit-strip__label">Kits</span>
+              <% kitNames.forEach(name => { %>
+                <span class="mc-kit-chip"><%= name %></span>
+              <% }) %>
+            </div>
+          <% } %>
+
           <% if (!stats || stats.length === 0) { %>
             <div class="mc-empty mc-card">
               <h2>No placements yet</h2>
@@ -37,22 +50,27 @@
               <a class="mc-button mc-button--accent" href="/submit">Submit Proof</a>
             </div>
           <% } else { %>
-            <div class="mc-card mc-card--table">
+            <div class="mc-card mc-card--table mc-leaderboard">
               <table class="mc-table">
                 <thead>
                   <tr>
                     <th>#</th>
                     <th>Player</th>
-                    <th>Kits &amp; Tiers</th>
+                    <th>Loadout</th>
                     <th>Total Points</th>
                   </tr>
                 </thead>
                 <tbody>
                   <% stats.forEach((stat, index) => {
                        const isLinked = (userLinked || []).some(account => account.game_username === stat.players?.username);
+                       const rank = index + 1;
+                       const rowClasses = [
+                         isLinked ? 'is-highlighted' : '',
+                         rank <= 3 ? `is-top-${rank}` : ''
+                       ].filter(Boolean).join(' ');
                   %>
-                    <tr class="<%= isLinked ? 'is-highlighted' : '' %>">
-                      <td data-title="Rank">#<%= index + 1 %></td>
+                    <tr class="<%= rowClasses %>">
+                      <td data-title="Rank">#<%= rank %></td>
                       <td data-title="Player" class="mc-player">
                         <a href="/profile/<%= stat.players?.username %>" class="mc-player__link">
                           <img
@@ -67,18 +85,21 @@
                           <span class="mc-badge">You</span>
                         <% } %>
                       </td>
-                      <td data-title="Kits" class="mc-kits">
+                      <td data-title="Loadout" class="mc-kits">
                         <% if (stat.kits && stat.kits.length > 0) { %>
                           <ul>
                             <% stat.kits.forEach(kit => { %>
-                              <li><strong><%= kit.kit %></strong> — <span><%= kit.tier %></span></li>
+                              <li>
+                                <span class="mc-kit-name"><%= kit.kit %></span>
+                                <span class="mc-kit-tier"><%= kit.tier %></span>
+                              </li>
                             <% }) %>
                           </ul>
                         <% } else { %>
                           <span class="mc-text-muted">No kits recorded</span>
                         <% } %>
                       </td>
-                      <td data-title="Points"><%= stat.total_points %></td>
+                      <td data-title="Points"><span class="mc-point-chip"><%= stat.total_points %></span></td>
                     </tr>
                   <% }) %>
                 </tbody>
