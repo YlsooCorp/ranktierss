@@ -6,7 +6,33 @@ const multer = require("multer");
 const { createClient } = require("@supabase/supabase-js");
 const cors = require("cors");
 const fs = require("fs");
-const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const fallbackFetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const baseFetch = typeof globalThis.fetch === "function" ? globalThis.fetch.bind(globalThis) : fallbackFetch;
+const AbortControllerClass = typeof globalThis.AbortController === "function" ? globalThis.AbortController : null;
+const HTTP_TIMEOUT_MS = Math.max(2000, parseInt(process.env.HTTP_TIMEOUT_MS || "", 10) || 5000);
+
+async function fetchWithTimeout(resource, options = {}) {
+  if (!AbortControllerClass) {
+    return baseFetch(resource, options);
+  }
+
+  const controller = new AbortControllerClass();
+  const timeoutId = setTimeout(() => controller.abort(), HTTP_TIMEOUT_MS);
+
+  try {
+    return await baseFetch(resource, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      const timeoutError = new Error(`Request timed out after ${HTTP_TIMEOUT_MS}ms`);
+      timeoutError.cause = error;
+      timeoutError.status = 408;
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 const bcrypt = require("bcrypt");
 const { WebhookClient, EmbedBuilder } = require("discord.js");
 
@@ -29,12 +55,7 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
   );
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const EVENTS_TABLE = "events";
-const PLAYER_EVENT_RECORDS_TABLE = "player_event_records";
-const MINECRAFT_SERVER_IP = process.env.MINECRAFT_SERVER_IP || "play.ranktiers.gg";
-const DISCORD_INVITE = process.env.DISCORD_INVITE || "https://discord.gg/wQMUPyxcQj";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { global: { fetch: fetchWithTimeout } });
 
 const EVENTS_TABLE = "events";
 const PLAYER_EVENT_RECORDS_TABLE = "player_event_records";
@@ -276,7 +297,7 @@ async function sendDiscordTierUpdate({ username, game, kit, tier, updated }) {
 // -------------------- UTILITY FUNCTIONS --------------------
 async function getMinecraftUUID(username) {
   try {
-    const res = await fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`);
+    const res = await fetchWithTimeout(`https://api.mojang.com/users/profiles/minecraft/${username}`);
     if (!res.ok) return null;
     const data = await res.json();
     return data.id;
@@ -525,15 +546,28 @@ app.post("/admin/game/add", requireAdmin, async (req, res) => {
 
 // -------------------- MAIN PAGES --------------------
 app.get("/", async (req, res) => {
-  const { data: games } = await supabase.from("games").select("*").order("name");
+  let games = [];
+  try {
+    const { data, error } = await supabase.from("games").select("*").order("name");
+    if (error) throw error;
+    games = data || [];
+  } catch (error) {
+    console.error("Failed to load games", error);
+  }
+
   let linkedAccounts = [];
   if (req.session.user) {
-    const { data } = await supabase
-      .from("user_linked_accounts")
-      .select("*")
-      .eq("user_id", req.session.user.id)
-      .eq("game", "Minecraft");
-    linkedAccounts = data || [];
+    try {
+      const { data, error } = await supabase
+        .from("user_linked_accounts")
+        .select("*")
+        .eq("user_id", req.session.user.id)
+        .eq("game", "Minecraft");
+      if (error) throw error;
+      linkedAccounts = data || [];
+    } catch (error) {
+      console.error("Failed to load linked accounts", error);
+    }
   }
 
   const minecraftOnly = (games || []).filter(game => game.name?.toLowerCase() === "minecraft");
@@ -615,31 +649,41 @@ app.get("/events", async (req, res) => {
 
 app.get("/events/:id", async (req, res) => {
   const eventId = req.params.id;
-  const { data: event, error: eventError } = await supabase
-    .from(EVENTS_TABLE)
-    .select("*")
-    .eq("id", eventId)
-    .maybeSingle();
-  if (eventError) {
-    console.error("Failed to fetch event", eventError);
-    return res.status(500).send("Unable to load event.");
+  let event;
+
+  try {
+    const { data, error } = await supabase
+      .from(EVENTS_TABLE)
+      .select("*")
+      .eq("id", eventId)
+      .maybeSingle();
+    if (error) throw error;
+    event = data;
+  } catch (error) {
+    console.error("Failed to fetch event", error);
+    const statusCode = error?.status === 408 ? 504 : 500;
+    return res.status(statusCode).send(statusCode === 504 ? "Event data request timed out." : "Unable to load event.");
   }
+
   if (!event) return res.status(404).send("Event not found");
 
   const bracket = parseBracket(event.bracket);
   let eventRecords = [];
   let viewError = null;
 
-  const { data: records, error: recordsError } = await supabase
-    .from(PLAYER_EVENT_RECORDS_TABLE)
-    .select("player_id, wins, losses, players(username)")
-    .eq("event_id", eventId);
+  try {
+    const { data, error } = await supabase
+      .from(PLAYER_EVENT_RECORDS_TABLE)
+      .select("player_id, wins, losses, players(username)")
+      .eq("event_id", eventId);
 
-  if (recordsError) {
+    if (error) throw error;
+    if (data) eventRecords = data;
+  } catch (recordsError) {
     console.error("Failed to fetch event records", recordsError);
-    viewError = "Participant records are temporarily unavailable.";
-  } else if (records) {
-    eventRecords = records;
+    viewError = recordsError?.status === 408
+      ? "Participant data timed out. Please refresh to try again."
+      : "Participant records are temporarily unavailable.";
   }
 
   res.render("event", {
