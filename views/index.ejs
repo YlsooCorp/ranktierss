@@ -18,6 +18,14 @@ events, and prove your skill with verified evidence.
             <div class="mc-hero__actions">
               <a class="mc-button mc-button--accent" href="/game/Minecraft">View Leaderboard</a>
               <a class="mc-button mc-button--ghost" href="/events">Browse Events</a>
+              <button
+                class="mc-button mc-button--outline"
+                type="button"
+                data-copy-text="<%= minecraftServerIp %>"
+                data-toast="Server IP copied!"
+              >
+                Copy Server IP
+              </button>
             </div>
             <% const minecraftAccount = (linkedAccounts || []).find(acc => acc.game?.toLowerCase() === 'minecraft'); %>
             <div class="mc-hero__status mc-card">
@@ -34,6 +42,24 @@ events, and prove your skill with verified evidence.
                 <a class="mc-pill" href="/register">Create Account</a>
               <% } %>
             </div>
+            <div class="mc-hero__ip mc-card">
+              <div class="mc-hero__ip-header">
+                <h3>Server IP</h3>
+                <span class="mc-tag mc-tag--subtle">Always online</span>
+              </div>
+              <div class="mc-hero__ip-body">
+                <code><%= minecraftServerIp %></code>
+                <button
+                  type="button"
+                  class="mc-pill mc-pill--accent"
+                  data-copy-text="<%= minecraftServerIp %>"
+                  data-toast="Server IP copied!"
+                >
+                  Copy
+                </button>
+              </div>
+              <p class="mc-text-muted">Hop on to scrim, practise kits, and secure stat-tracked wins.</p>
+            </div>
           </div>
 
           <aside class="mc-hero__preview mc-card">
@@ -46,6 +72,19 @@ events, and prove your skill with verified evidence.
               <li>Discord notifications for promotions</li>
             </ul>
             <a class="mc-pill mc-pill--accent" href="/submit">Submit Proof</a>
+            <% if (upcomingEvent) { const heroEventIcon = upcomingEventTextures && upcomingEventTextures[upcomingEvent.kit]; %>
+              <div class="mc-hero__event">
+                <div class="mc-hero__event-heading">
+                  <h4>Next Event</h4>
+                  <% if (heroEventIcon) { %>
+                    <img src="<%= heroEventIcon %>" alt="<%= upcomingEvent.kit %> kit" loading="lazy" />
+                  <% } %>
+                </div>
+                <p class="mc-hero__event-name"><%= upcomingEvent.name %></p>
+                <p class="mc-text-muted">Kit: <%= upcomingEvent.kit %></p>
+                <a class="mc-button mc-button--ghost" href="/events/<%= upcomingEvent.id %>">View bracket</a>
+              </div>
+            <% } %>
           </aside>
         </div>
       </section>

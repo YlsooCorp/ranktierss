@@ -16,6 +16,8 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 
 const EVENTS_TABLE = "events";
 const PLAYER_EVENT_RECORDS_TABLE = "player_event_records";
+const MINECRAFT_SERVER_IP = process.env.MINECRAFT_SERVER_IP || "play.ranktiers.gg";
+const DISCORD_INVITE = process.env.DISCORD_INVITE || "https://discord.gg/wQMUPyxcQj";
 
 // -------------------- FILE UPLOAD --------------------
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "uploads";
@@ -44,6 +46,8 @@ app.use(
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
   res.locals.currentAdmin = req.session.admin || null;
+  res.locals.minecraftServerIp = MINECRAFT_SERVER_IP;
+  res.locals.discordInvite = DISCORD_INVITE;
   next();
 });
 
@@ -207,7 +211,7 @@ function findMatch(bracket, matchId) {
 }
 
 app.get("/discord", (_, res) => {
-  res.redirect("https://discord.gg/ranktiers");
+  res.redirect(DISCORD_INVITE);
 });
 
 // -------------------- DISCORD WEBHOOK --------------------
@@ -497,9 +501,29 @@ app.get("/", async (req, res) => {
   const minecraftOnly = (games || []).filter(game => game.name?.toLowerCase() === "minecraft");
   const featuredGames = minecraftOnly.length > 0 ? minecraftOnly : [{ name: "Minecraft" }];
 
+  let upcomingEvent = null;
+  let upcomingEventTextures = {};
+  try {
+    const { data, error } = await supabase
+      .from(EVENTS_TABLE)
+      .select("id, name, kit, created_at")
+      .eq("game", "Minecraft")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    if (data && data.length > 0) {
+      upcomingEvent = data[0];
+      upcomingEventTextures = buildKitTextureMap([upcomingEvent.kit]);
+    }
+  } catch (error) {
+    console.error("Failed to load featured event", error);
+  }
+
   res.render("index", {
     games: featuredGames,
     linkedAccounts,
+    upcomingEvent,
+    upcomingEventTextures,
     pageTitle: "Home",
     navActive: "home",
   });
@@ -516,6 +540,8 @@ app.get("/privacy", (req, res) => {
 app.get("/events", async (req, res) => {
   let events = [];
   let eventsError = null;
+  const kitFilter = (req.query.kit || "").trim();
+  let availableKits = [];
 
   try {
     const { data, error } = await supabase
@@ -524,18 +550,26 @@ app.get("/events", async (req, res) => {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    events = data || [];
+    const allEvents = data || [];
+    availableKits = Array.from(
+      new Set(allEvents.map(event => event.kit).filter(Boolean))
+    ).sort((a, b) => a.localeCompare(b));
+    events = kitFilter ? allEvents.filter(event => event.kit === kitFilter) : allEvents;
   } catch (error) {
     console.error("Failed to load events", error);
     eventsError = "Unable to load events right now. Please try again later.";
   }
 
-  const kitTextures = buildKitTextureMap((events || []).map(event => event.kit).filter(Boolean));
+  const kitTextures = buildKitTextureMap(
+    (availableKits.length > 0 ? availableKits : (events || []).map(event => event.kit)).filter(Boolean)
+  );
 
   res.render("events", {
     events,
     eventsError,
     kitTextures,
+    kitFilter,
+    availableKits,
     pageTitle: "Events",
     navActive: "events",
   });

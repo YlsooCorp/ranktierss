@@ -47,6 +47,17 @@
           <span>Submit Proof</span>
         </a>
       </nav>
+      <div class="mc-nav__utilities" data-nav-utilities>
+        <button
+          type="button"
+          class="mc-pill mc-pill--ghost"
+          data-copy-text="<%= minecraftServerIp %>"
+          data-toast="Server IP copied!"
+        >
+          Copy IP
+        </button>
+        <a class="mc-pill mc-pill--accent" href="/discord">Discord</a>
+      </div>
       <div class="mc-nav__auth" data-nav-auth>
         <% if (currentUser) { %>
           <a href="/account" class="mc-button mc-button--ghost">My Account</a>
