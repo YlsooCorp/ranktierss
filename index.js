@@ -14,6 +14,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
+const EVENTS_TABLE = "events";
+const PLAYER_EVENT_RECORDS_TABLE = "player_event_records";
+
 // -------------------- FILE UPLOAD --------------------
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "uploads";
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
@@ -253,7 +256,7 @@ function buildMinecraftRenderUrl(uuid, username) {
 }
 
 const KIT_TEXTURE_BASE =
-  "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.20.1/assets/minecraft/textures";
+  "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.10/assets/minecraft/textures";
 const KIT_TEXTURE_FALLBACK = `${KIT_TEXTURE_BASE}/item/netherite_sword.png`;
 
 const kitTextureRules = [
@@ -276,9 +279,23 @@ const kitTextureRules = [
   { match: /(combo|duel|pvp|sword|classic)/i, path: "item/diamond_sword.png" },
 ];
 
+function normalizeKitKey(name = "") {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
 function resolveKitTexturePath(kitName = "") {
   const normalized = typeof kitName === "string" ? kitName.trim() : "";
   if (!normalized) return "item/netherite_sword.png";
+  const kitKey = normalizeKitKey(normalized);
+  if (kitKey) {
+    if (kitKey.includes("mace")) return "item/mace.png";
+    if (kitKey.includes("lifesteal")) return "gui/sprites/hud/heart/full.png";
+    if (kitKey === "smp" || kitKey.includes("survivalmultiplayer")) return "item/shield.png";
+    if (kitKey.includes("neth") && kitKey.includes("pot")) return "item/potion_bottle_splash.png";
+    if (kitKey.includes("spear")) return "item/spear.png";
+  }
   for (const rule of kitTextureRules) {
     if (rule.match.test(normalized)) return rule.path;
   }
@@ -502,7 +519,7 @@ app.get("/events", async (req, res) => {
 
   try {
     const { data, error } = await supabase
-      .from("events")
+      .from(EVENTS_TABLE)
       .select("id, name, game, kit, created_at")
       .order("created_at", { ascending: false });
 
@@ -526,7 +543,11 @@ app.get("/events", async (req, res) => {
 
 app.get("/events/:id", async (req, res) => {
   const eventId = req.params.id;
-  const { data: event, error: eventError } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
+  const { data: event, error: eventError } = await supabase
+    .from(EVENTS_TABLE)
+    .select("*")
+    .eq("id", eventId)
+    .maybeSingle();
   if (eventError) {
     console.error("Failed to fetch event", eventError);
     return res.status(500).send("Unable to load event.");
@@ -538,7 +559,7 @@ app.get("/events/:id", async (req, res) => {
   let viewError = null;
 
   const { data: records, error: recordsError } = await supabase
-    .from("player_event_records")
+    .from(PLAYER_EVENT_RECORDS_TABLE)
     .select("player_id, wins, losses, players(username)")
     .eq("event_id", eventId);
 
@@ -635,7 +656,7 @@ app.get("/profile/:username", async (req, res) => {
     .eq("player_id", player.id);
 
   const { data: eventRecords } = await supabase
-    .from("player_event_records")
+    .from(PLAYER_EVENT_RECORDS_TABLE)
     .select("event_id, wins, losses, events(name, game, kit)")
     .eq("player_id", player.id);
 
@@ -779,7 +800,7 @@ app.post("/admin/events/create", requireAdmin, async (req, res) => {
     propagateAutoAdvances(bracket);
 
     const { data: createdEvent, error: eventError } = await supabase
-      .from("events")
+      .from(EVENTS_TABLE)
       .insert([
         {
           name,
@@ -794,7 +815,7 @@ app.post("/admin/events/create", requireAdmin, async (req, res) => {
 
     if (eventError) throw eventError;
 
-    await supabase.from("player_event_records").upsert(
+    await supabase.from(PLAYER_EVENT_RECORDS_TABLE).upsert(
       participants.map(participant => ({
         event_id: createdEvent.id,
         player_id: participant.id,
@@ -815,7 +836,11 @@ app.post("/admin/events/create", requireAdmin, async (req, res) => {
 
 app.get("/admin/events/:id", requireAdmin, async (req, res) => {
   const eventId = req.params.id;
-  const { data: event, error } = await supabase.from("events").select("*").eq("id", eventId).single();
+  const { data: event, error } = await supabase
+    .from(EVENTS_TABLE)
+    .select("*")
+    .eq("id", eventId)
+    .single();
   if (error || !event) {
     req.session.adminError = "Event not found.";
     return res.redirect("/admin/dashboard");
@@ -825,7 +850,7 @@ app.get("/admin/events/:id", requireAdmin, async (req, res) => {
   let eventError = null;
 
   const { data: records, error: recordsError } = await supabase
-    .from("player_event_records")
+    .from(PLAYER_EVENT_RECORDS_TABLE)
     .select("player_id, wins, losses, players(username)")
     .eq("event_id", eventId);
 
@@ -866,7 +891,11 @@ app.post("/admin/events/:id/report", requireAdmin, async (req, res) => {
   }
 
   try {
-    const { data: event, error: eventError } = await supabase.from("events").select("*").eq("id", eventId).single();
+    const { data: event, error: eventError } = await supabase
+      .from(EVENTS_TABLE)
+      .select("*")
+      .eq("id", eventId)
+      .single();
     if (eventError || !event) {
       req.session.adminError = "Event not found.";
       return res.redirect("/admin/dashboard");
@@ -911,19 +940,19 @@ app.post("/admin/events/:id/report", requireAdmin, async (req, res) => {
     assignWinnerToNextMatch(bracket, match);
 
     const { error: updateError } = await supabase
-      .from("events")
+      .from(EVENTS_TABLE)
       .update({ bracket })
       .eq("id", eventId);
     if (updateError) throw updateError;
 
     const { data: winnerRecord } = await supabase
-      .from("player_event_records")
+      .from(PLAYER_EVENT_RECORDS_TABLE)
       .select("wins, losses")
       .eq("event_id", event.id)
       .eq("player_id", winnerPlayer.id)
       .maybeSingle();
 
-    await supabase.from("player_event_records").upsert(
+    await supabase.from(PLAYER_EVENT_RECORDS_TABLE).upsert(
       [
         {
           event_id: event.id,
@@ -937,13 +966,13 @@ app.post("/admin/events/:id/report", requireAdmin, async (req, res) => {
 
     if (loserPlayer) {
       const { data: loserRecord } = await supabase
-        .from("player_event_records")
+        .from(PLAYER_EVENT_RECORDS_TABLE)
         .select("wins, losses")
         .eq("event_id", event.id)
         .eq("player_id", loserPlayer.id)
         .maybeSingle();
 
-      await supabase.from("player_event_records").upsert(
+      await supabase.from(PLAYER_EVENT_RECORDS_TABLE).upsert(
         [
           {
             event_id: event.id,
@@ -974,7 +1003,7 @@ app.get("/admin/dashboard", requireAdmin, async (req, res) => {
     .select("id, player_id, game, kit, tier, points, players(username)")
     .order("points", { ascending: false });
   const { data: events } = await supabase
-    .from("events")
+    .from(EVENTS_TABLE)
     .select("id, name, game, kit, created_at")
     .order("created_at", { ascending: false });
 
