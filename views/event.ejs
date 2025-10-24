@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: typeof navActive !== 'undefined' ? navActive : null }) %>
+
+    <main class="mc-main">
+      <section class="mc-section">
+        <div class="mc-container">
+          <div class="mc-breadcrumbs">
+            <a href="/events">← Back to events</a>
+            <% if (adminView) { %>
+              <span aria-hidden="true">•</span>
+              <a href="/admin/dashboard">Admin dashboard</a>
+            <% } %>
+          </div>
+
+          <header class="mc-section__header">
+            <p class="mc-tag">Minecraft Event</p>
+            <h1 class="mc-heading"><%= event.name %></h1>
+            <p class="mc-text-muted">Kit: <strong><%= event.kit %></strong> • Game: <strong><%= event.game %></strong></p>
+            <% if (event.tiers && event.tiers.length > 0) { %>
+              <p class="mc-text-muted">Tiers: <%= event.tiers.join(', ') %></p>
+            <% } %>
+          </header>
+
+          <% if (adminMessage) { %>
+            <div class="mc-notice mc-notice--success"><%= adminMessage %></div>
+          <% } %>
+          <% if (adminError) { %>
+            <div class="mc-notice mc-notice--error"><%= adminError %></div>
+          <% } %>
+          <% if (eventError) { %>
+            <div class="mc-notice mc-notice--error"><%= eventError %></div>
+          <% } %>
+
+          <section class="mc-bracket">
+            <h2>Bracket</h2>
+            <% if (bracket.rounds && bracket.rounds.length > 0) { %>
+              <div class="mc-bracket__grid">
+                <% bracket.rounds.forEach((round, index) => { %>
+                  <div class="mc-bracket__column">
+                    <h3>Round <%= index + 1 %></h3>
+                    <% round.forEach(match => { %>
+                      <article class="mc-card mc-match <%= match.winner ? 'is-complete' : '' %>">
+                        <div class="mc-match__player <%= match.winner && match.player1 && match.winner.id === match.player1.id ? 'is-winner' : '' %>">
+                          <span><%= match.player1 ? match.player1.username : 'TBD' %></span>
+                        </div>
+                        <div class="mc-match__player <%= match.winner && match.player2 && match.winner.id === match.player2.id ? 'is-winner' : '' %>">
+                          <span><%= match.player2 ? match.player2.username : 'TBD' %></span>
+                        </div>
+                        <% if (adminView && !match.autoAdvance && !match.winner && match.player1 && match.player2) { %>
+                          <form class="mc-match__form" method="POST" action="/admin/events/<%= event.id %>/report">
+                            <input type="hidden" name="matchId" value="<%= match.id %>" />
+                            <label class="sr-only" for="winner-<%= match.id %>">Select winner</label>
+                            <select id="winner-<%= match.id %>" name="winnerId" required>
+                              <option value="">Select winner</option>
+                              <option value="<%= match.player1.id %>"><%= match.player1.username %></option>
+                              <option value="<%= match.player2.id %>"><%= match.player2.username %></option>
+                            </select>
+                            <button class="mc-button mc-button--accent" type="submit">Record</button>
+                          </form>
+                        <% } else { %>
+                          <p class="mc-match__status">
+                            <% if (match.winner) { %>
+                              Winner: <strong><%= match.winner.username %></strong>
+                            <% } else if (match.autoAdvance) { %>
+                              Advanced automatically
+                            <% } else { %>
+                              Awaiting result
+                            <% } %>
+                          </p>
+                        <% } %>
+                      </article>
+                    <% }) %>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <div class="mc-empty mc-card">
+                <h3>Bracket unavailable</h3>
+                <p>This event does not have any generated matches yet.</p>
+              </div>
+            <% } %>
+          </section>
+
+          <section class="mc-section mc-section--tight">
+            <header class="mc-section__header">
+              <h2 class="mc-heading">Participant Records</h2>
+              <p class="mc-text-muted">Event wins and losses update player profiles automatically.</p>
+            </header>
+            <% if (records && records.length > 0) { %>
+              <div class="mc-card mc-card--table">
+                <table class="mc-table">
+                  <thead>
+                    <tr>
+                      <th>Player</th>
+                      <th>Wins</th>
+                      <th>Losses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% records.forEach(record => { %>
+                      <tr>
+                        <td data-title="Player"><%= record.players ? record.players.username : record.player_id %></td>
+                        <td data-title="Wins"><%= record.wins || 0 %></td>
+                        <td data-title="Losses"><%= record.losses || 0 %></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            <% } else { %>
+              <div class="mc-empty mc-card">
+                <h3>No results posted</h3>
+                <p>Match winners will appear here as soon as rounds finish.</p>
+              </div>
+            <% } %>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
+</html>
