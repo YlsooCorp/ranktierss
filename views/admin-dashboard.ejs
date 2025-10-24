@@ -1,106 +1,207 @@
-                                                <!DOCTYPE html>
-                                                <html lang="en">
-                                                <head>
-                                                  <meta charset="UTF-8">
-                                                  <title>Admin Dashboard - RankTiers</title>
-                                                  <link rel="stylesheet" href="/styles.css">
-                                                  <style>
-                                                    body { background: #0f172a; color: #fff; font-family: Poppins, sans-serif; }
-                                                    header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: #1e293b; }
-                                                    h1 { font-size: 1.6rem; color: #00f2fe; }
-                                                    a.logout { color: #f87171; text-decoration: none; }
-                                                    main { padding: 2rem; }
-                                                    table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: #1e293b; border-radius: 8px; overflow: hidden; }
-                                                    th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.1); }
-                                                    th { background: #334155; }
-                                                    tr:hover { background: rgba(255,255,255,0.05); }
-                                                    form.inline { display: inline-block; margin: 0; }
-                                                    input, select, button { background: #334155; border: none; color: white; padding: 0.4rem 0.6rem; border-radius: 6px; }
-                                                    button { cursor: pointer; background: linear-gradient(135deg, #4facfe, #00f2fe); }
-                                                    .section { margin-bottom: 3rem; }
-                                                    h2 { color: #38bdf8; }
-                                                  </style>
-                                                </head>
-                                                <body>
-                                                <header>
-                                                  <h1>⚙️ RankTiers Admin</h1>
-                                                  <a href="/admin/logout" class="logout">Logout</a>
-                                                </header>
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: null }) %>
 
-                                                <main>
-                                                  <section class="section">
-                                                    <h2>🎮 Games</h2>
-                                                    <form method="POST" action="/admin/game/add">
-                                                      <input type="text" name="name" placeholder="Add new game" required>
-                                                      <button type="submit">Add Game</button>
-                                                    </form>
-                                                    <table>
-                                                      <tr><th>ID</th><th>Name</th><th>Actions</th></tr>
-                                                      <% games.forEach(g => { %>
-                                                        <tr>
-                                                          <td><%= g.id %></td>
-                                                          <td><%= g.name %></td>
-                                                          <td>
-                                                            <form class="inline" action="/admin/delete/games/<%= g.id %>" method="POST">
-                                                              <button type="submit">🗑 Delete</button>
-                                                            </form>
-                                                          </td>
-                                                        </tr>
-                                                      <% }) %>
-                                                    </table>
-                                                  </section>
+    <main class="mc-main">
+      <section class="mc-section">
+        <div class="mc-container mc-admin">
+          <header class="mc-section__header">
+            <p class="mc-tag">Admin</p>
+            <h1 class="mc-heading">Control Center</h1>
+            <p class="mc-text-muted">Create events, manage kits, and keep the Minecraft ladder accurate.</p>
+          </header>
+          <div class="mc-admin__actions">
+            <a class="mc-button mc-button--ghost" href="/admin/logout">Logout</a>
+          </div>
 
-                                                  <section class="section">
-                                                    <h2>👤 Players</h2>
-                                                    <form method="POST" action="/admin/player/add">
-                                                      <input type="text" name="username" placeholder="Add new player" required>
-                                                      <button type="submit">Add Player</button>
-                                                    </form>
-                                                    <table>
-                                                      <tr><th>ID</th><th>Username</th><th>Actions</th></tr>
-                                                      <% players.forEach(p => { %>
-                                                        <tr>
-                                                          <td><%= p.id %></td>
-                                                          <td><%= p.username %></td>
-                                                          <td>
-                                                            <form class="inline" action="/admin/delete/players/<%= p.id %>" method="POST">
-                                                              <button type="submit">🗑 Delete</button>
-                                                            </form>
-                                                          </td>
-                                                        </tr>
-                                                      <% }) %>
-                                                    </table>
-                                                  </section>
+          <% if (adminMessage) { %>
+            <div class="mc-notice mc-notice--success"><%= adminMessage %></div>
+          <% } %>
+          <% if (adminError) { %>
+            <div class="mc-notice mc-notice--error"><%= adminError %></div>
+          <% } %>
 
-                                                  <section class="section">
-                                                    <h2>🏅 Player Stats</h2>
-                                                    <table>
-                                                      <tr><th>Player</th><th>Game</th><th>Kit</th><th>Tier</th><th>Points</th><th>Actions</th></tr>
-                                                      <% stats.forEach(s => { %>
-                                                        <tr>
-                                                          <td><%= s.players.username %></td>
-                                                          <td><%= s.game %></td>
-                                                          <td><%= s.kit %></td>
-                                                          <td>
-                                                            <form class="inline" method="POST" action="/admin/stat/update/<%= s.id %>">
-                                                              <select name="tier">
-                                                                <% TIERS.forEach(t => { %>
-                                                                  <option value="<%= t %>" <%= t === s.tier ? "selected" : "" %>><%= t %></option>
-                                                                <% }) %>
-                                                              </select>
-                                                          </td>
-                                                          <td><input type="number" name="points" value="<%= s.points %>" style="width:70px"></td>
-                                                          <td>
-                                                              <button type="submit">💾 Save</button>
-                                                              </form>
-                                                              <form class="inline" action="/admin/delete/player_stats/<%= s.id %>" method="POST">
-                                                                <button type="submit">🗑 Delete</button>
-                                                              </form>
-                                                          </td>
-                                                        </tr>
-                                                      <% }) %>
-                                                    </table>
-                                                  </section>
-                                                </main>
-                                                </body>
-                                                </html>
+          <section class="mc-admin__section">
+            <h2 class="mc-heading">Create Minecraft Event</h2>
+            <form class="mc-card mc-form" method="POST" action="/admin/events/create">
+              <div class="mc-grid mc-grid--split">
+                <label for="event-name">Event name</label>
+                <input id="event-name" class="mc-input" type="text" name="name" placeholder="Emerald Cup" required />
+
+                <label for="event-game">Game</label>
+                <select id="event-game" class="mc-input" name="game" required>
+                  <option value="">Select game</option>
+                  <% games.forEach(g => { %>
+                    <option value="<%= g.name %>"><%= g.name %></option>
+                  <% }) %>
+                </select>
+
+                <label for="event-kit">Kit</label>
+                <input id="event-kit" class="mc-input" type="text" name="kit" placeholder="Crystal Duels" required />
+              </div>
+
+              <div class="mc-tier-picker">
+                <label class="mc-tier-picker__all">
+                  <input type="checkbox" name="tiers_all" value="on" checked />
+                  Include every tier
+                </label>
+                <div class="mc-tier-picker__grid">
+                  <% TIERS.forEach(tier => { %>
+                    <label>
+                      <input type="checkbox" name="tiers" value="<%= tier %>" />
+                      <span><%= tier %></span>
+                    </label>
+                  <% }) %>
+                </div>
+              </div>
+
+              <button class="mc-button mc-button--accent" type="submit">Create Event</button>
+            </form>
+
+            <div class="mc-card mc-card--table">
+              <h3>Recent Events</h3>
+              <% if (events && events.length > 0) { %>
+                <table class="mc-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Game</th>
+                      <th>Kit</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% events.forEach(event => { %>
+                      <tr>
+                        <td data-title="Name"><%= event.name %></td>
+                        <td data-title="Game"><%= event.game %></td>
+                        <td data-title="Kit"><%= event.kit %></td>
+                        <td data-title="Manage"><a class="mc-link" href="/admin/events/<%= event.id %>">Manage →</a></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              <% } else { %>
+                <p class="mc-text-muted">No events created yet.</p>
+              <% } %>
+            </div>
+          </section>
+
+          <section class="mc-admin__section">
+            <h2 class="mc-heading">Games</h2>
+            <form class="mc-inline-form" method="POST" action="/admin/game/add">
+              <input class="mc-input" type="text" name="name" placeholder="Add new game" required />
+              <button class="mc-button mc-button--accent" type="submit">Add Game</button>
+            </form>
+            <div class="mc-card mc-card--table">
+              <table class="mc-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% games.forEach(g => { %>
+                    <tr>
+                      <td data-title="ID"><%= g.id %></td>
+                      <td data-title="Name"><%= g.name %></td>
+                      <td data-title="Actions">
+                        <form class="mc-inline-form" action="/admin/delete/games/<%= g.id %>" method="POST">
+                          <button class="mc-button mc-button--ghost" type="submit">Delete</button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="mc-admin__section">
+            <h2 class="mc-heading">Players</h2>
+            <form class="mc-inline-form" method="POST" action="/admin/player/add">
+              <input class="mc-input" type="text" name="username" placeholder="Add new player" required />
+              <button class="mc-button mc-button--accent" type="submit">Add Player</button>
+            </form>
+            <div class="mc-card mc-card--table">
+              <table class="mc-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% players.forEach(p => { %>
+                    <tr>
+                      <td data-title="ID"><%= p.id %></td>
+                      <td data-title="Username"><%= p.username %></td>
+                      <td data-title="Actions">
+                        <form class="mc-inline-form" action="/admin/delete/players/<%= p.id %>" method="POST">
+                          <button class="mc-button mc-button--ghost" type="submit">Delete</button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="mc-admin__section">
+            <h2 class="mc-heading">Player Stats</h2>
+            <div class="mc-card mc-card--table">
+              <table class="mc-table">
+                <thead>
+                  <tr>
+                    <th>Player</th>
+                    <th>Game</th>
+                    <th>Kit</th>
+                    <th>Tier</th>
+                    <th>Points</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% stats.forEach(s => { %>
+                    <tr>
+                      <td data-title="Player"><%= s.players.username %></td>
+                      <td data-title="Game"><%= s.game %></td>
+                      <td data-title="Kit"><%= s.kit %></td>
+                      <td data-title="Tier"><%= s.tier %></td>
+                      <td data-title="Points"><%= s.points %></td>
+                      <td data-title="Actions">
+                        <form class="mc-inline-form mc-inline-form--stack" method="POST" action="/admin/stat/update/<%= s.id %>">
+                          <label class="sr-only" for="tier-<%= s.id %>">Tier</label>
+                          <select id="tier-<%= s.id %>" class="mc-input" name="tier">
+                            <% TIERS.forEach(t => { %>
+                              <option value="<%= t %>" <%= t === s.tier ? 'selected' : '' %>><%= t %></option>
+                            <% }) %>
+                          </select>
+                          <label class="sr-only" for="points-<%= s.id %>">Points</label>
+                          <input id="points-<%= s.id %>" class="mc-input" type="number" name="points" value="<%= s.points %>" />
+                          <button class="mc-button mc-button--accent" type="submit">Save</button>
+                        </form>
+                        <form class="mc-inline-form" action="/admin/delete/player_stats/<%= s.id %>" method="POST">
+                          <button class="mc-button mc-button--ghost" type="submit">Delete</button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
+</html>

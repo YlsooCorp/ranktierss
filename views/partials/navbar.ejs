@@ -1,0 +1,28 @@
+<header class="mc-nav">
+  <div class="mc-nav__inner">
+    <a href="/" class="mc-logo" aria-label="RankTiers home">
+      <span class="mc-logo__mark">RT</span>
+      <span class="mc-logo__text">RankTiers</span>
+    </a>
+    <nav class="mc-nav__links" data-nav-links>
+      <a href="/" class="mc-nav__link <%= navActive === 'home' ? 'is-active' : '' %>">Home</a>
+      <a href="/game/Minecraft" class="mc-nav__link <%= navActive === 'leaderboard' ? 'is-active' : '' %>">Leaderboard</a>
+      <a href="/events" class="mc-nav__link <%= navActive === 'events' ? 'is-active' : '' %>">Events</a>
+      <a href="/submit" class="mc-nav__link <%= navActive === 'submit' ? 'is-active' : '' %>">Submit Proof</a>
+    </nav>
+    <div class="mc-nav__auth" data-nav-auth>
+      <% if (currentUser) { %>
+        <a href="/account" class="mc-button mc-button--ghost">My Account</a>
+        <a href="/logout" class="mc-button mc-button--accent">Logout</a>
+      <% } else { %>
+        <a href="/login" class="mc-button mc-button--ghost">Login</a>
+        <a href="/register" class="mc-button mc-button--accent">Sign Up</a>
+      <% } %>
+    </div>
+    <button class="mc-nav__toggle" type="button" aria-expanded="false" aria-label="Toggle navigation" data-nav-toggle>
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+</header>
