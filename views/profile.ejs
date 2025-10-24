@@ -8,25 +8,54 @@
     <main class="mc-main">
       <section class="mc-section">
         <div class="mc-container">
-          <header class="mc-profile">
-            <% if (mcUUID) { %>
-              <img
-                src="https://crafatar.com/avatars/<%= mcUUID %>?size=128&overlay"
-                alt="<%= player.username %> skin"
-                class="mc-profile__avatar"
-              />
-            <% } else { %>
-              <div class="mc-profile__placeholder"><%= player.username.charAt(0).toUpperCase() %></div>
-            <% } %>
-            <div>
-              <p class="mc-tag">Minecraft Player</p>
-              <h1 class="mc-heading"><%= player.username %></h1>
-              <p class="mc-text-muted">Total Points: <strong><%= totalPoints %></strong></p>
-            </div>
-          </header>
-
           <% const minecraftStats = (stats || []).filter(stat => stat.game && stat.game.toLowerCase() === 'minecraft'); %>
           <% const displayStats = minecraftStats.length > 0 ? minecraftStats : stats; %>
+
+          <header class="mc-profile mc-card">
+            <div class="mc-profile__figure">
+              <% if (mcUUID) { %>
+                <img
+                  src="https://crafatar.com/renders/body/<%= mcUUID %>?size=256&overlay"
+                  alt="<%= player.username %> full skin"
+                  class="mc-profile__render"
+                  loading="lazy"
+                />
+              <% } else { %>
+                <div class="mc-profile__placeholder"><%= player.username.charAt(0).toUpperCase() %></div>
+              <% } %>
+            </div>
+            <div class="mc-profile__body">
+              <p class="mc-tag">Minecraft Player</p>
+              <h1 class="mc-heading"><%= player.username %></h1>
+              <p class="mc-text-muted">
+                Grinding the Emerald ladder with <strong><%= totalPoints %></strong> total points.
+              </p>
+
+              <% const kitCount = (displayStats && displayStats.length) || 0; %>
+              <% const totalWins = (eventRecords || []).reduce((sum, record) => sum + (record.wins || 0), 0); %>
+              <% const totalLosses = (eventRecords || []).reduce((sum, record) => sum + (record.losses || 0), 0); %>
+              <% const achievementCount = (achievements && achievements.length) || 0; %>
+
+              <div class="mc-profile__summary">
+                <div class="mc-profile__summary-item">
+                  <span class="mc-profile__summary-value"><%= totalPoints %></span>
+                  <span class="mc-profile__summary-label">Ladder Points</span>
+                </div>
+                <div class="mc-profile__summary-item">
+                  <span class="mc-profile__summary-value"><%= kitCount %></span>
+                  <span class="mc-profile__summary-label">Kits Verified</span>
+                </div>
+                <div class="mc-profile__summary-item">
+                  <span class="mc-profile__summary-value"><%= totalWins %>W - <%= totalLosses %>L</span>
+                  <span class="mc-profile__summary-label">Event Record</span>
+                </div>
+                <div class="mc-profile__summary-item">
+                  <span class="mc-profile__summary-value"><%= achievementCount %></span>
+                  <span class="mc-profile__summary-label">Achievements</span>
+                </div>
+              </div>
+            </div>
+          </header>
 
           <section class="mc-section mc-section--tight">
             <header class="mc-section__header">
