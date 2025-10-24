@@ -12,7 +12,29 @@ const { WebhookClient, EmbedBuilder } = require("discord.js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.SUPABASE_PROJECT_URL;
+const SUPABASE_KEY =
+  process.env.SUPABASE_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  throw new Error(
+    "Supabase environment variables are missing. Please set SUPABASE_URL and SUPABASE_KEY (or SUPABASE_SERVICE_ROLE_KEY)."
+  );
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const EVENTS_TABLE = "events";
+const PLAYER_EVENT_RECORDS_TABLE = "player_event_records";
+const MINECRAFT_SERVER_IP = process.env.MINECRAFT_SERVER_IP || "play.ranktiers.gg";
+const DISCORD_INVITE = process.env.DISCORD_INVITE || "https://discord.gg/wQMUPyxcQj";
 
 const EVENTS_TABLE = "events";
 const PLAYER_EVENT_RECORDS_TABLE = "player_event_records";
