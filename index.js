@@ -795,7 +795,7 @@ app.post("/admin/events/create", requireAdmin, async (req, res) => {
   try {
     let query = supabase
       .from("player_stats")
-      .select("player_id, tier, players(username)")
+      .select("player_id, tier")
       .eq("game", game)
       .eq("kit", kit);
 
@@ -804,7 +804,7 @@ app.post("/admin/events/create", requireAdmin, async (req, res) => {
     }
 
     const { data: stats, error: statsError } = await query;
-    if (statsError) throw statsError;
+    if (statsError) throw new Error(`Failed to load eligible players: ${statsError.message}`);
 
     if (!stats || stats.length === 0) {
       req.session.adminError = "No players found for the selected criteria.";
@@ -812,16 +812,37 @@ app.post("/admin/events/create", requireAdmin, async (req, res) => {
     }
 
     const seen = new Set();
-    const participants = [];
+    const uniquePlayerIds = [];
     stats.forEach(stat => {
-      if (!seen.has(stat.player_id)) {
+      if (stat.player_id && !seen.has(stat.player_id)) {
         seen.add(stat.player_id);
-        participants.push({
-          id: stat.player_id,
-          username: stat.players?.username || `Player ${stat.player_id}`,
-        });
+        uniquePlayerIds.push(stat.player_id);
       }
     });
+
+    if (uniquePlayerIds.length === 0) {
+      req.session.adminError = "No eligible players were found for this event.";
+      return res.redirect("/admin/dashboard");
+    }
+
+    const { data: playersLookup, error: playersError } = await supabase
+      .from("players")
+      .select("id, username")
+      .in("id", uniquePlayerIds);
+
+    if (playersError) throw new Error(`Failed to load player profiles: ${playersError.message}`);
+
+    const usernameMap = new Map();
+    (playersLookup || []).forEach(player => {
+      if (player?.id) {
+        usernameMap.set(player.id, player.username || `Player ${player.id}`);
+      }
+    });
+
+    const participants = uniquePlayerIds.map(id => ({
+      id,
+      username: usernameMap.get(id) || `Player ${id}`,
+    }));
 
     participants.sort(() => Math.random() - 0.5);
 
@@ -849,15 +870,19 @@ app.post("/admin/events/create", requireAdmin, async (req, res) => {
 
     if (eventError) throw eventError;
 
-    await supabase.from(PLAYER_EVENT_RECORDS_TABLE).upsert(
-      participants.map(participant => ({
-        event_id: createdEvent.id,
-        player_id: participant.id,
-        wins: 0,
-        losses: 0,
-      })),
-      { onConflict: "event_id,player_id" }
-    );
+    const { error: recordsError } = await supabase
+      .from(PLAYER_EVENT_RECORDS_TABLE)
+      .upsert(
+        participants.map(participant => ({
+          event_id: createdEvent.id,
+          player_id: participant.id,
+          wins: 0,
+          losses: 0,
+        })),
+        { onConflict: "event_id,player_id" }
+      );
+
+    if (recordsError) throw new Error(`Failed to initialize event records: ${recordsError.message}`);
 
     req.session.adminMessage = `Event "${name}" created successfully.`;
     res.redirect(`/admin/events/${createdEvent.id}`);
