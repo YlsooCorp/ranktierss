@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive: typeof navActive !== 'undefined' ? navActive : null }) %>
+
+    <main class="mc-main">
+      <section class="mc-page-header">
+        <div class="mc-container">
+          <p class="mc-tag">Minecraft Events</p>
+          <h1 class="mc-heading">Emerald Cup Schedule</h1>
+          <p class="mc-text-muted">Follow every bracket across kits and tiers. All events feature Minecraft as the only game.</p>
+        </div>
+      </section>
+
+      <section class="mc-section">
+        <div class="mc-container">
+          <% if (eventsError) { %>
+            <div class="mc-notice mc-notice--error"><%= eventsError %></div>
+          <% } %>
+
+          <% if (!eventsError && availableKits && availableKits.length > 0) { %>
+            <form class="mc-filter" method="get">
+              <label class="mc-filter__label" for="kit-filter">Filter by kit</label>
+              <div class="mc-filter__controls">
+                <select id="kit-filter" name="kit" class="mc-select">
+                  <option value="" <%= !kitFilter ? 'selected' : '' %>>All kits</option>
+                  <% availableKits.forEach(kitName => { %>
+                    <option value="<%= kitName %>" <%= kitFilter === kitName ? 'selected' : '' %>><%= kitName %></option>
+                  <% }) %>
+                </select>
+                <button class="mc-button mc-button--accent" type="submit">Apply</button>
+                <% if (kitFilter) { %>
+                  <a class="mc-button mc-button--ghost" href="/events">Reset</a>
+                <% } %>
+              </div>
+            </form>
+          <% } %>
+
+          <% if (events && events.length > 0) { %>
+            <div class="mc-grid mc-grid--events">
+              <% events.forEach(event => { const kitIcon = kitTextures && kitTextures[event.kit]; %>
+                <article class="mc-card mc-event-card">
+                  <header>
+                    <h3><%= event.name %></h3>
+                    <span class="mc-kit-label">
+                      <% if (kitIcon) { %>
+                        <img
+                          src="<%= kitIcon %>"
+                          alt="<%= event.kit %> kit icon"
+                          class="mc-kit-icon"
+                          loading="lazy"
+                        />
+                      <% } %>
+                      <span>Kit: <%= event.kit %></span>
+                    </span>
+                  </header>
+                  <p>Competitive bracket tailored for <strong><%= event.game %></strong> players.</p>
+                  <a class="mc-button mc-button--ghost" href="/events/<%= event.id %>">View Bracket</a>
+                </article>
+              <% }) %>
+            </div>
+            <% if (!eventsError && availableKits && availableKits.length > 0) { %>
+              <aside class="mc-kit-legend mc-card">
+                <div class="mc-kit-legend__header">
+                  <h2>Kit Legend</h2>
+                  <p class="mc-text-muted">Recognize each bracket instantly with iconic Minecraft items.</p>
+                </div>
+                <ul class="mc-kit-legend__list">
+                  <% availableKits.forEach(kitName => { const icon = kitTextures && kitTextures[kitName]; %>
+                    <li>
+                      <% if (icon) { %>
+                        <img src="<%= icon %>" alt="<%= kitName %> kit icon" loading="lazy" class="mc-kit-icon" />
+                      <% } %>
+                      <span><%= kitName %></span>
+                    </li>
+                  <% }) %>
+                </ul>
+              </aside>
+            <% } %>
+          <% } else { %>
+            <div class="mc-empty mc-card">
+              <h2>No events yet</h2>
+              <p>We're preparing the next Emerald Cup bracket. Join our Discord to stay notified.</p>
+              <a class="mc-button mc-button--accent" href="<%= discordInvite %>" target="_blank" rel="noopener">Discord</a>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
+</html>

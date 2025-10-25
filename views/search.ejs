@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <%- include('partials/navbar', { navActive }) %>
+
+    <main class="mc-main">
+      <section class="mc-section mc-search">
+        <div class="mc-container">
+          <header class="mc-section__header">
+            <h1 class="mc-heading">Player Search</h1>
+            <p class="mc-text-muted">
+              Look up Minecraft competitors by in-game name to view their profiles, kit placements, and event records.
+            </p>
+          </header>
+
+          <form class="mc-search__form" action="/search" method="get">
+            <label class="mc-search__label" for="player-search-input">Search by username</label>
+            <div class="mc-search__controls">
+              <input
+                id="player-search-input"
+                name="q"
+                type="text"
+                value="<%= query %>"
+                placeholder="e.g. Purpled"
+                autocomplete="off"
+                required
+              />
+              <button class="mc-button mc-button--accent" type="submit">Search</button>
+            </div>
+            <p class="mc-text-muted mc-search__hint">Showing up to <%= maxResults %> players that match your search.</p>
+          </form>
+
+          <% if (searchError) { %>
+            <div class="mc-alert mc-alert--error"><%= searchError %></div>
+          <% } else if (query && results.length === 0) { %>
+            <div class="mc-alert">No players matched "<%= query %>" just yet. Try a different spelling or ask them to join the ladder.</div>
+          <% } else if (!query) { %>
+            <div class="mc-alert">Type a Minecraft IGN above to find their RankTiers profile.</div>
+          <% } else { %>
+            <div class="mc-search__results">
+              <% results.forEach(player => { %>
+                <article class="mc-card mc-search-card">
+                  <div class="mc-search-card__skin">
+                    <% if (player.renderUrl) { %>
+                      <img src="<%= player.renderUrl %>" alt="<%= player.username %> skin" loading="lazy" />
+                    <% } else { %>
+                      <div class="mc-search-card__skin--fallback" aria-hidden="true">?</div>
+                    <% } %>
+                  </div>
+                  <div class="mc-search-card__body">
+                    <div class="mc-search-card__header">
+                      <h2><a href="<%= player.profileUrl %>"><%= player.username %></a></h2>
+                      <% if (player.bestTier) { %>
+                        <span class="mc-tag mc-tag--accent">Top Tier: <%= player.bestTier %></span>
+                      <% } %>
+                    </div>
+                    <p class="mc-text-muted">Total points: <strong><%= player.totalPoints %></strong></p>
+                    <% if (player.kits && player.kits.length > 0) { %>
+                      <div class="mc-search-card__kits">
+                        <% player.kits.slice(0, 4).forEach(kit => { const icon = kitTextures && kitTextures[kit.kit]; %>
+                          <div class="mc-search-card__kit">
+                            <% if (icon) { %>
+                              <img src="<%= icon %>" alt="<%= kit.kit %> kit" loading="lazy" />
+                            <% } %>
+                            <div>
+                              <span class="mc-search-card__kit-name"><%= kit.kit %></span>
+                              <% if (kit.tier) { %>
+                                <span class="mc-text-muted">Tier <%= kit.tier %></span>
+                              <% } %>
+                            </div>
+                          </div>
+                        <% }) %>
+                        <% if (player.kits.length > 4) { %>
+                          <span class="mc-text-muted mc-search-card__more">+<%= player.kits.length - 4 %> more kits</span>
+                        <% } %>
+                      </div>
+                    <% } else { %>
+                      <p class="mc-text-muted">No Minecraft kits recorded yet.</p>
+                    <% } %>
+                    <a class="mc-pill mc-pill--ghost" href="<%= player.profileUrl %>">View profile</a>
+                  </div>
+                </article>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+  </body>
+</html>

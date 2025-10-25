@@ -1,26 +1,32 @@
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>Admin Login - RankTiers</title>
-        <link rel="stylesheet" href="/styles.css">
-      </head>
-      <body>
-        <main class="container">
-          <h2>Admin Login</h2>
+<!DOCTYPE html>
+<html lang="en">
+  <%- include('partials/head', { pageTitle }) %>
+  <body class="mc-body">
+    <div class="mc-background"></div>
+    <main class="mc-main">
+      <section class="mc-section">
+        <div class="mc-container mc-auth">
+          <div class="mc-auth__panel mc-card">
+            <h1 class="mc-heading">Admin Login</h1>
+            <p class="mc-text-muted">Secure access to manage Minecraft events and leaderboards.</p>
 
-          <% if (typeof error !== 'undefined' && error) { %>
-            <p class="error"><%= error %></p>
-          <% } %>
+            <% if (error) { %>
+              <div class="mc-notice mc-notice--error"><%= error %></div>
+            <% } %>
 
-          <form action="/admin/login" method="post">
-            <label>Username: <input type="text" name="username"></label><br>
-            <label>Password: <input type="password" name="password"></label><br>
-            <button type="submit">Login</button>
-          </form>
+            <form class="mc-form" action="/admin/login" method="post">
+              <label for="username">Username</label>
+              <input id="username" class="mc-input" type="text" name="username" required />
 
-          <p>DEV: use any username and password <b>admin</b> (for testing only)</p>
-        </main>
-      </body>
-      </html>
+              <label for="password">Password</label>
+              <input id="password" class="mc-input" type="password" name="password" required />
+
+              <button class="mc-button mc-button--accent" type="submit">Login</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+    <%- include('partials/footer') %>
+  </body>
+</html>
