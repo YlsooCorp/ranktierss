@@ -61,6 +61,7 @@ const EVENTS_TABLE = "events";
 const PLAYER_EVENT_RECORDS_TABLE = "player_event_records";
 const MINECRAFT_SERVER_IP = process.env.MINECRAFT_SERVER_IP || "play.ranktiers.gg";
 const DISCORD_INVITE = process.env.DISCORD_INVITE || "https://discord.gg/wQMUPyxcQj";
+const MAX_SEARCH_RESULTS = 20;
 
 // -------------------- FILE UPLOAD --------------------
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "uploads";
@@ -575,6 +576,8 @@ app.get("/", async (req, res) => {
 
   let upcomingEvent = null;
   let upcomingEventTextures = {};
+  let spotlightPlayers = [];
+  let spotlightKitTextures = {};
   try {
     const { data, error } = await supabase
       .from(EVENTS_TABLE)
@@ -591,13 +594,159 @@ app.get("/", async (req, res) => {
     console.error("Failed to load featured event", error);
   }
 
+  try {
+    const { data, error } = await supabase
+      .from("player_stats")
+      .select("player_id, kit, points, players(username, minecraft_uuid, minecraft_username)")
+      .eq("game", "Minecraft");
+
+    if (error) throw error;
+
+    const aggregated = new Map();
+    (data || []).forEach(row => {
+      if (!row || !row.player_id) return;
+      if (!aggregated.has(row.player_id)) {
+        aggregated.set(row.player_id, {
+          playerId: row.player_id,
+          player: row.players || {},
+          totalPoints: 0,
+          kits: new Set(),
+        });
+      }
+      const entry = aggregated.get(row.player_id);
+      entry.totalPoints += row.points || 0;
+      if (row.kit) entry.kits.add(row.kit);
+    });
+
+    const sorted = Array.from(aggregated.values())
+      .map(entry => ({
+        ...entry,
+        kits: Array.from(entry.kits),
+      }))
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .slice(0, 3);
+
+    const withUsernames = sorted.filter(entry => entry.player?.username);
+
+    const kitNames = new Set();
+    spotlightPlayers = withUsernames.map(entry => {
+      const username = entry.player.username;
+      const lookupName = entry.player?.minecraft_username || username;
+      const renderUrl = buildMinecraftRenderUrl(entry.player?.minecraft_uuid, lookupName);
+      entry.kits.forEach(kit => {
+        if (kit) kitNames.add(kit);
+      });
+
+      return {
+        username,
+        totalPoints: entry.totalPoints,
+        kits: entry.kits,
+        renderUrl,
+        profileUrl: `/profile/${encodeURIComponent(username)}`,
+      };
+    });
+
+    spotlightKitTextures = buildKitTextureMap([...kitNames]);
+  } catch (error) {
+    console.error("Failed to load spotlight players", error);
+  }
+
   res.render("index", {
     games: featuredGames,
     linkedAccounts,
     upcomingEvent,
     upcomingEventTextures,
+    spotlightPlayers,
+    spotlightKitTextures,
     pageTitle: "Home",
     navActive: "home",
+  });
+});
+
+app.get("/search", async (req, res) => {
+  const query = (req.query.q || "").trim();
+  let results = [];
+  let searchError = null;
+  let kitTextures = {};
+
+  if (query) {
+    try {
+      const { data: playersData, error: playersError } = await supabase
+        .from("players")
+        .select("id, username, minecraft_uuid, minecraft_username")
+        .ilike("username", `%${query}%`)
+        .order("username")
+        .limit(MAX_SEARCH_RESULTS);
+
+      if (playersError) throw playersError;
+
+      const playerIds = (playersData || []).map(player => player.id).filter(Boolean);
+      const statsMap = new Map();
+
+      if (playerIds.length > 0) {
+        const { data: statsData, error: statsError } = await supabase
+          .from("player_stats")
+          .select("player_id, kit, tier, points")
+          .in("player_id", playerIds)
+          .eq("game", "Minecraft");
+
+        if (statsError) throw statsError;
+
+        (statsData || []).forEach(stat => {
+          if (!statsMap.has(stat.player_id)) {
+            statsMap.set(stat.player_id, {
+              totalPoints: 0,
+              kits: [],
+              bestTier: null,
+            });
+          }
+          const entry = statsMap.get(stat.player_id);
+          entry.totalPoints += stat.points || 0;
+          if (stat.kit) {
+            entry.kits.push({ kit: stat.kit, tier: stat.tier });
+          }
+          if (stat.tier) {
+            const currentIndex = TIERS.indexOf(entry.bestTier);
+            const tierIndex = TIERS.indexOf(stat.tier);
+            if (tierIndex !== -1 && (currentIndex === -1 || tierIndex < currentIndex)) {
+              entry.bestTier = stat.tier;
+            }
+          }
+        });
+      }
+
+      const kitNames = new Set();
+      results = (playersData || []).map(player => {
+        const stats = statsMap.get(player.id) || { totalPoints: 0, kits: [], bestTier: null };
+        stats.kits.forEach(kit => {
+          if (kit?.kit) kitNames.add(kit.kit);
+        });
+        const lookupName = player.minecraft_username || player.username;
+        return {
+          username: player.username,
+          profileUrl: `/profile/${encodeURIComponent(player.username)}`,
+          renderUrl: buildMinecraftRenderUrl(player.minecraft_uuid, lookupName),
+          totalPoints: stats.totalPoints,
+          bestTier: stats.bestTier,
+          kits: stats.kits,
+        };
+      });
+
+      kitTextures = buildKitTextureMap([...kitNames]);
+    } catch (error) {
+      console.error("Failed to search players", error);
+      searchError = "We couldn't load search results right now. Please try again later.";
+    }
+  }
+
+  res.render("search", {
+    query,
+    results,
+    searchError,
+    kitTextures,
+    pageTitle: "Search Players",
+    navActive: "search",
+    maxResults: MAX_SEARCH_RESULTS,
   });
 });
 

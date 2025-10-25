@@ -89,6 +89,48 @@ events, and prove your skill with verified evidence.
         </div>
       </section>
 
+      <% if (spotlightPlayers && spotlightPlayers.length > 0) { %>
+        <section class="mc-section mc-section--spotlight">
+          <div class="mc-container">
+            <header class="mc-section__header">
+              <h2 class="mc-heading">Ladder Spotlights</h2>
+              <p class="mc-text-muted">Meet the current points leaders across Minecraft kits and events.</p>
+            </header>
+            <div class="mc-spotlight">
+              <% spotlightPlayers.forEach(player => { %>
+                <article class="mc-card mc-spotlight__card">
+                  <div class="mc-spotlight__skin">
+                    <% if (player.renderUrl) { %>
+                      <img src="<%= player.renderUrl %>" alt="<%= player.username %> skin" loading="lazy" />
+                    <% } %>
+                  </div>
+                  <div class="mc-spotlight__body">
+                    <h3><a href="<%= player.profileUrl %>"><%= player.username %></a></h3>
+                    <p class="mc-text-muted">Total points: <strong><%= player.totalPoints %></strong></p>
+                    <% if (player.kits && player.kits.length > 0) { %>
+                      <div class="mc-spotlight__kits">
+                        <% player.kits.slice(0, 3).forEach(kitName => { const icon = spotlightKitTextures && spotlightKitTextures[kitName]; %>
+                          <span class="mc-spotlight__kit">
+                            <% if (icon) { %>
+                              <img src="<%= icon %>" alt="<%= kitName %> kit" loading="lazy" />
+                            <% } %>
+                            <span><%= kitName %></span>
+                          </span>
+                        <% }) %>
+                        <% if (player.kits.length > 3) { %>
+                          <span class="mc-text-muted">+<%= player.kits.length - 3 %> more</span>
+                        <% } %>
+                      </div>
+                    <% } %>
+                    <a class="mc-pill mc-pill--ghost" href="<%= player.profileUrl %>">View profile</a>
+                  </div>
+                </article>
+              <% }) %>
+            </div>
+          </div>
+        </section>
+      <% } %>
+
       <section class="mc-section">
         <div class="mc-container">
           <header class="mc-section__header">
