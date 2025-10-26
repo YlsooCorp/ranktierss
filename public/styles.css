@@ -1,17 +1,17 @@
 :root {
-  --bg-primary: #02040b;
-  --bg-secondary: rgba(6, 14, 28, 0.92);
-  --bg-surface: rgba(10, 22, 44, 0.94);
-  --bg-surface-strong: rgba(12, 26, 52, 0.96);
-  --bg-hover: rgba(37, 99, 255, 0.14);
-  --text-primary: #eef3ff;
-  --text-muted: #8598c9;
-  --accent-primary: #2d6dff;
-  --accent-secondary: #13b0ff;
-  --accent-soft: rgba(45, 109, 255, 0.22);
-  --border-soft: rgba(40, 82, 163, 0.38);
-  --shadow-strong: 0 35px 60px rgba(2, 4, 12, 0.7);
-  --shadow-soft: 0 18px 35px rgba(3, 8, 20, 0.55);
+  --bg-primary: #05070d;
+  --bg-secondary: rgba(14, 18, 30, 0.92);
+  --bg-surface: rgba(16, 21, 34, 0.92);
+  --bg-surface-strong: rgba(18, 24, 38, 0.96);
+  --bg-hover: rgba(240, 199, 94, 0.14);
+  --text-primary: #f6f8ff;
+  --text-muted: #9ea8c5;
+  --accent-primary: #f0c75e;
+  --accent-secondary: #7fb5ff;
+  --accent-soft: rgba(240, 199, 94, 0.2);
+  --border-soft: rgba(111, 142, 196, 0.4);
+  --shadow-strong: 0 35px 60px rgba(3, 4, 10, 0.7);
+  --shadow-soft: 0 18px 35px rgba(5, 8, 18, 0.55);
 }
 
 * {
@@ -28,9 +28,10 @@ body {
 body {
   font-family: 'Sora', 'Inter', sans-serif;
   background:
-    radial-gradient(circle at top right, rgba(37, 99, 255, 0.18), transparent 45%),
-    radial-gradient(circle at bottom left, rgba(12, 34, 84, 0.3), transparent 60%),
-    linear-gradient(180deg, #02040b 0%, #010107 100%);
+    radial-gradient(circle at 15% 15%, rgba(31, 60, 136, 0.26), transparent 45%),
+    radial-gradient(circle at 80% 12%, rgba(240, 199, 94, 0.18), transparent 55%),
+    radial-gradient(circle at 50% 80%, rgba(33, 58, 126, 0.24), transparent 60%),
+    linear-gradient(190deg, #04060b 0%, #060711 60%, #020307 100%);
   color: var(--text-primary);
   line-height: 1.6;
   position: relative;
@@ -41,10 +42,10 @@ body {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at 15% 25%, rgba(37, 99, 255, 0.22), transparent 50%),
-    radial-gradient(circle at 80% 12%, rgba(19, 176, 255, 0.18), transparent 55%),
-    radial-gradient(circle at 52% 78%, rgba(14, 42, 102, 0.25), transparent 65%),
-    linear-gradient(130deg, #01030a 0%, #020717 100%);
+    radial-gradient(circle at 15% 25%, rgba(240, 199, 94, 0.18), transparent 55%),
+    radial-gradient(circle at 82% 10%, rgba(58, 104, 188, 0.22), transparent 60%),
+    radial-gradient(circle at 52% 78%, rgba(31, 55, 120, 0.28), transparent 65%),
+    linear-gradient(130deg, #040611 0%, #060a18 45%, #04060f 100%);
   z-index: 0;
   pointer-events: none;
 }
@@ -75,7 +76,7 @@ body {
 }
 
 .mc-section--alt {
-  background: linear-gradient(160deg, rgba(45, 109, 255, 0.1), transparent);
+  background: linear-gradient(160deg, rgba(240, 199, 94, 0.08), transparent);
 }
 
 .mc-section--tight {
@@ -89,17 +90,17 @@ body {
 .mc-tag {
   display: inline-flex;
   padding: 0.35rem 0.8rem;
-  background: rgba(45, 109, 255, 0.16);
+  background: rgba(240, 199, 94, 0.16);
   border-radius: 999px;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--accent-secondary);
+  color: var(--accent-primary);
 }
 
 .mc-tag--subtle {
-  background: rgba(45, 109, 255, 0.1);
+  background: rgba(240, 199, 94, 0.1);
   color: var(--text-muted);
 }
 
@@ -117,8 +118,8 @@ body {
 
 .mc-card {
   position: relative;
-  background: linear-gradient(155deg, rgba(9, 18, 38, 0.98), rgba(5, 12, 28, 0.92));
-  border: 1px solid rgba(35, 70, 142, 0.38);
+  background: linear-gradient(155deg, rgba(12, 16, 28, 0.96), rgba(6, 10, 20, 0.92));
+  border: 1px solid rgba(240, 199, 94, 0.18);
   border-radius: 20px;
   padding: 1.9rem;
   box-shadow: var(--shadow-soft);
@@ -130,7 +131,7 @@ body {
   position: absolute;
   inset: 1px;
   border-radius: 19px;
-  border: 1px solid rgba(28, 57, 118, 0.4);
+  border: 1px solid rgba(240, 199, 94, 0.2);
   pointer-events: none;
 }
 
@@ -147,9 +148,9 @@ body {
   margin-bottom: 1.5rem;
   padding: 1rem 1.25rem;
   border-radius: 18px;
-  background: rgba(4, 12, 28, 0.82);
-  border: 1px solid rgba(45, 109, 255, 0.24);
-  box-shadow: inset 0 0 0 1px rgba(19, 176, 255, 0.1);
+  background: rgba(9, 13, 24, 0.86);
+  border: 1px solid rgba(240, 199, 94, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(127, 181, 255, 0.08);
 }
 
 .mc-kit-chip {
@@ -158,8 +159,8 @@ body {
   gap: 0.55rem;
   padding: 0.45rem 0.85rem;
   border-radius: 14px;
-  background: rgba(19, 176, 255, 0.14);
-  border: 1px solid rgba(45, 109, 255, 0.3);
+  background: rgba(240, 199, 94, 0.14);
+  border: 1px solid rgba(240, 199, 94, 0.32);
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.12em;
@@ -1590,6 +1591,9 @@ body {
   min-width: 200px;
   padding: 0.75rem 1rem;
   border-radius: 0.85rem;
+  border: 1px solid rgba(240, 199, 94, 0.24);
+  background: rgba(6, 11, 22, 0.94);
+  color: var(--text-primary);
   border: 1px solid rgba(52, 103, 201, 0.6);
   background: rgba(5, 11, 26, 0.9);
   color: #e6edff;
@@ -1599,6 +1603,8 @@ body {
 
 .mc-search__controls input:focus {
   outline: none;
+  border-color: rgba(240, 199, 94, 0.7);
+  box-shadow: 0 0 0 3px rgba(240, 199, 94, 0.18);
   border-color: rgba(93, 140, 255, 0.8);
   box-shadow: 0 0 0 3px rgba(78, 130, 255, 0.2);
 }
@@ -1610,6 +1616,9 @@ body {
 .mc-alert {
   padding: 1.25rem 1.5rem;
   border-radius: 1rem;
+  background: rgba(8, 14, 26, 0.85);
+  border: 1px solid rgba(240, 199, 94, 0.22);
+  color: var(--text-primary);
   background: rgba(16, 27, 52, 0.85);
   border: 1px solid rgba(45, 101, 204, 0.45);
   color: #d7e6ff;
@@ -1631,6 +1640,8 @@ body {
   display: flex;
   gap: 1.25rem;
   align-items: flex-start;
+  background: rgba(7, 12, 24, 0.92);
+  border: 1px solid rgba(240, 199, 94, 0.24);
   background: rgba(9, 16, 33, 0.9);
   border: 1px solid rgba(36, 84, 179, 0.5);
 }
@@ -1653,12 +1664,14 @@ body {
   width: 72px;
   height: 72px;
   border-radius: 50%;
+  background: rgba(8, 14, 26, 0.9);
   background: rgba(15, 27, 51, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
   font-weight: 600;
+  color: var(--accent-primary);
   color: #5d8dff;
 }
 
@@ -1691,6 +1704,10 @@ body {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+  background: rgba(8, 14, 26, 0.85);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(240, 199, 94, 0.2);
   background: rgba(14, 24, 46, 0.85);
   padding: 0.5rem 0.75rem;
   border-radius: 0.85rem;

@@ -1163,6 +1163,7 @@ app.get("/admin/events/:id", requireAdmin, async (req, res) => {
     admin: req.session.admin || null,
     pageTitle: `${event.name} | Admin View`,
     navActive: "events",
+    kitTexture: event.kit ? resolveKitTextureUrl(event.kit) : null,
   });
 });
 
