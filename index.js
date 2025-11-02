@@ -35,6 +35,7 @@ async function fetchWithTimeout(resource, options = {}) {
 }
 const bcrypt = require("bcrypt");
 const { WebhookClient, EmbedBuilder } = require("discord.js");
+const { version: APP_VERSION = "1" } = require("./package.json");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -62,6 +63,7 @@ const PLAYER_EVENT_RECORDS_TABLE = "player_event_records";
 const MINECRAFT_SERVER_IP = process.env.MINECRAFT_SERVER_IP || "play.ranktiers.gg";
 const DISCORD_INVITE = process.env.DISCORD_INVITE || "https://discord.gg/wQMUPyxcQj";
 const MAX_SEARCH_RESULTS = 20;
+const ASSET_VERSION = process.env.ASSET_VERSION || APP_VERSION;
 
 // -------------------- FILE UPLOAD --------------------
 const UPLOAD_DIR = process.env.UPLOAD_DIR || "uploads";
@@ -93,6 +95,7 @@ app.use((req, res, next) => {
   res.locals.minecraftServerIp = MINECRAFT_SERVER_IP;
   res.locals.discordInvite = DISCORD_INVITE;
   res.locals.navSearchQuery = "";
+  res.locals.assetVersion = ASSET_VERSION;
   next();
 });
 
