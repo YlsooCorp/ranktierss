@@ -1,0 +1,162 @@
+<footer class="mc-footer">
+  <div class="mc-footer__inner">
+    <div class="mc-footer__brand">
+      <span class="mc-logo__mark">MC</span>
+      <span class="mc-logo__text">RankTiers</span>
+    </div>
+    <div class="mc-footer__links">
+      <a href="/terms">Terms</a>
+      <span aria-hidden="true">•</span>
+      <a href="/privacy">Privacy</a>
+      <span aria-hidden="true">•</span>
+      <a href="<%= discordInvite %>" target="_blank" rel="noopener">Discord</a>
+    </div>
+    <p class="mc-footer__copy">© <%= new Date().getFullYear() %> RankTiers. Crafted for the Minecraft competitive scene.</p>
+  </div>
+</footer>
+<script>
+  const navToggle = document.querySelector('[data-nav-toggle]');
+  const navContent = document.querySelector('[data-nav-content]');
+  const navInner = document.querySelector('.mc-nav__inner');
+  const reduceMotion = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : { matches: false };
+
+  function setNavOpen(open) {
+    if (navToggle) {
+      navToggle.setAttribute('aria-expanded', String(open));
+    }
+    navContent?.classList.toggle('is-open', open);
+    document.body.classList.toggle('mc-nav-open', open);
+  }
+
+  setNavOpen(false);
+
+  if (navToggle) {
+    navToggle.addEventListener('click', event => {
+      event.stopPropagation();
+      const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+      setNavOpen(!expanded);
+    });
+  }
+
+  navContent?.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => setNavOpen(false));
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      setNavOpen(false);
+    }
+  });
+
+  document.addEventListener(
+    'click',
+    event => {
+      if (!document.body.classList.contains('mc-nav-open')) {
+        return;
+      }
+      if (navInner?.contains(event.target)) {
+        return;
+      }
+      setNavOpen(false);
+    },
+    { capture: true }
+  );
+
+  const copyButtons = document.querySelectorAll('[data-copy-text]');
+  let toastStack = document.querySelector('.mc-toast-stack');
+
+  function ensureToastStack() {
+    if (!toastStack) {
+      toastStack = document.createElement('div');
+      toastStack.className = 'mc-toast-stack';
+      toastStack.setAttribute('role', 'status');
+      toastStack.setAttribute('aria-live', 'polite');
+      document.body.appendChild(toastStack);
+    }
+    return toastStack;
+  }
+
+  function showToast(message, isError = false) {
+    const stack = ensureToastStack();
+    const toast = document.createElement('div');
+    toast.className = `mc-toast${isError ? ' is-error' : ''}`;
+    toast.textContent = message;
+    stack.appendChild(toast);
+    requestAnimationFrame(() => {
+      toast.classList.add('is-visible');
+    });
+    setTimeout(() => {
+      toast.classList.remove('is-visible');
+      setTimeout(() => toast.remove(), 200);
+    }, 2400);
+  }
+
+  async function copyToClipboard(text) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      }
+      return true;
+    } catch (error) {
+      console.error('Failed to copy text', error);
+      return false;
+    }
+  }
+
+  copyButtons.forEach(button => {
+    button.addEventListener('click', async () => {
+      const text = button.getAttribute('data-copy-text');
+      if (!text) return;
+      const success = await copyToClipboard(text);
+      if (success) {
+        button.classList.add('is-success');
+        showToast(button.getAttribute('data-toast') || 'Copied to clipboard');
+        setTimeout(() => button.classList.remove('is-success'), 1500);
+      } else {
+        showToast('Unable to copy text', true);
+      }
+    });
+  });
+
+  let scrollTopButton = document.querySelector('.mc-scroll-top');
+  if (!scrollTopButton) {
+    scrollTopButton = document.createElement('button');
+    scrollTopButton.type = 'button';
+    scrollTopButton.className = 'mc-scroll-top';
+    scrollTopButton.setAttribute('aria-label', 'Back to top');
+    scrollTopButton.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m6 15 6-6 6 6" />
+      </svg>
+    `;
+    document.body.appendChild(scrollTopButton);
+  }
+
+  const updateScrollButton = () => {
+    const shouldShow = window.scrollY > 420;
+    scrollTopButton.classList.toggle('is-visible', shouldShow);
+  };
+
+  updateScrollButton();
+  window.addEventListener('scroll', updateScrollButton, { passive: true });
+
+  scrollTopButton.addEventListener('click', () => {
+    if (reduceMotion.matches) {
+      window.scrollTo(0, 0);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+</script>
