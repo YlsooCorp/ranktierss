@@ -25,6 +25,7 @@
                 value="<%= query %>"
                 placeholder="e.g. Purpled"
                 autocomplete="off"
+                <%= query ? '' : 'autofocus' %>
                 required
               />
               <button class="mc-button mc-button--accent" type="submit">Search</button>

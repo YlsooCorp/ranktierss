@@ -16,6 +16,54 @@
 </footer>
 <script>
   const navToggle = document.querySelector('[data-nav-toggle]');
+  const navContent = document.querySelector('[data-nav-content]');
+  const navInner = document.querySelector('.mc-nav__inner');
+  const reduceMotion = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : { matches: false };
+
+  function setNavOpen(open) {
+    if (navToggle) {
+      navToggle.setAttribute('aria-expanded', String(open));
+    }
+    navContent?.classList.toggle('is-open', open);
+    document.body.classList.toggle('mc-nav-open', open);
+  }
+
+  setNavOpen(false);
+
+  if (navToggle) {
+    navToggle.addEventListener('click', event => {
+      event.stopPropagation();
+      const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+      setNavOpen(!expanded);
+    });
+  }
+
+  navContent?.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => setNavOpen(false));
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      setNavOpen(false);
+    }
+  });
+
+  document.addEventListener(
+    'click',
+    event => {
+      if (!document.body.classList.contains('mc-nav-open')) {
+        return;
+      }
+      if (navInner?.contains(event.target)) {
+        return;
+      }
+      setNavOpen(false);
+    },
+    { capture: true }
+  );
+
   const navLinks = document.querySelector('[data-nav-links]');
   const navAuth = document.querySelector('[data-nav-auth]');
   const navUtilities = document.querySelector('[data-nav-utilities]');
@@ -95,6 +143,32 @@
     });
   });
 
+  let scrollTopButton = document.querySelector('.mc-scroll-top');
+  if (!scrollTopButton) {
+    scrollTopButton = document.createElement('button');
+    scrollTopButton.type = 'button';
+    scrollTopButton.className = 'mc-scroll-top';
+    scrollTopButton.setAttribute('aria-label', 'Back to top');
+    scrollTopButton.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m6 15 6-6 6 6" />
+      </svg>
+    `;
+    document.body.appendChild(scrollTopButton);
+  }
+
+  const updateScrollButton = () => {
+    const shouldShow = window.scrollY > 420;
+    scrollTopButton.classList.toggle('is-visible', shouldShow);
+  };
+
+  updateScrollButton();
+  window.addEventListener('scroll', updateScrollButton, { passive: true });
+
+  scrollTopButton.addEventListener('click', () => {
+    if (reduceMotion.matches) {
+      window.scrollTo(0, 0);
+    } else {
   const scrollProgress = document.createElement('div');
   scrollProgress.className = 'mc-scroll-progress';
   document.body.appendChild(scrollProgress);

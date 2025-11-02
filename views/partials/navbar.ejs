@@ -6,6 +6,39 @@
         <span class="mc-logo__mark">MC</span>
         <span class="mc-logo__text">RankTiers</span>
       </a>
+      <div class="mc-nav__content" data-nav-content>
+        <% const activeTab = navActive === 'events' ? 'events' : 'home'; %>
+        <nav class="mc-nav__links">
+          <a href="/" class="mc-nav__link <%= activeTab === 'home' ? 'is-active' : '' %>" <%= activeTab === 'home' ? 'aria-current=\"page\"' : '' %>>Home</a>
+          <a href="/events" class="mc-nav__link <%= activeTab === 'events' ? 'is-active' : '' %>" <%= activeTab === 'events' ? 'aria-current=\"page\"' : '' %>>Events</a>
+        </nav>
+        <% const searchPrefill = typeof navSearchQuery !== 'undefined' ? navSearchQuery : ''; %>
+        <form class="mc-nav__search" action="/search" method="get">
+          <label class="sr-only" for="nav-search">Search players</label>
+          <input
+            id="nav-search"
+            type="search"
+            name="q"
+            value="<%= searchPrefill %>"
+            placeholder="Search players"
+            autocomplete="off"
+          />
+          <button type="submit" aria-label="Search players">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-3.5-3.5" />
+            </svg>
+          </button>
+        </form>
+        <div class="mc-nav__account">
+          <% if (currentUser) { %>
+            <a href="/account" class="mc-nav__account-link">Account</a>
+            <a href="/logout" class="mc-nav__account-link mc-nav__account-link--primary">Logout</a>
+          <% } else { %>
+            <a href="/login" class="mc-nav__account-link">Login</a>
+            <a href="/register" class="mc-nav__account-link mc-nav__account-link--primary">Sign Up</a>
+          <% } %>
+        </div>
       <nav class="mc-nav__links" data-nav-links>
         <a href="/" class="mc-nav__link <%= navActive === 'home' ? 'is-active' : '' %>">
           <span class="mc-nav__icon" aria-hidden="true">

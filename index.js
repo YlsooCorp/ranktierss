@@ -92,6 +92,7 @@ app.use((req, res, next) => {
   res.locals.currentAdmin = req.session.admin || null;
   res.locals.minecraftServerIp = MINECRAFT_SERVER_IP;
   res.locals.discordInvite = DISCORD_INVITE;
+  res.locals.navSearchQuery = "";
   next();
 });
 
@@ -747,6 +748,7 @@ app.get("/search", async (req, res) => {
     pageTitle: "Search Players",
     navActive: "search",
     maxResults: MAX_SEARCH_RESULTS,
+    navSearchQuery: query,
   });
 });
 
