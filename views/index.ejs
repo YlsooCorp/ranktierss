@@ -9,6 +9,12 @@
       <section class="mc-hero">
         <div class="mc-container mc-hero__grid">
           <div class="mc-hero__content">
+    <main class="mc-main" id="main-content">
+      <section class="mc-hero">
+        <div class="mc-container mc-hero__grid">
+          <div class="mc-hero__content">
+            <% const totalGames = Array.isArray(games) ? games.length : 0; %>
+            <% const spotlightCount = Array.isArray(spotlightPlayers) ? spotlightPlayers.length : 0; %>
             <p class="mc-tag">Minecraft Competitive Ladder</p>
             <h1 class="mc-hero__title">Climb the Emerald Ranks</h1>
             <p class="mc-hero__subtitle">
@@ -59,6 +65,37 @@ events, and prove your skill with verified evidence.
                 </button>
               </div>
               <p class="mc-text-muted">Hop on to scrim, practise kits, and secure stat-tracked wins.</p>
+            </div>
+            <div class="mc-hero__quickstart mc-card">
+              <h3>Need a head start?</h3>
+              <ul class="mc-quick-list">
+                <li>
+                  <span class="mc-key-hint" aria-hidden="true">/</span>
+                  <span>Press <strong>/</strong> anywhere to open global search.</span>
+                </li>
+                <li>
+                  <span class="mc-key-hint" aria-hidden="true">Shift + /</span>
+                  <span>Use the quick menu to jump into leaderboards or resources.</span>
+                </li>
+                <li>
+                  <span class="mc-key-hint" aria-hidden="true">B</span>
+                  <span>Tap the back-to-top control after scrolling deep into stats.</span>
+                </li>
+              </ul>
+              <ul class="mc-quick-stats">
+                <li>
+                  <strong><%= totalGames %></strong>
+                  <span>Kits actively tracked</span>
+                </li>
+                <li>
+                  <strong><%= spotlightCount %></strong>
+                  <span>Spotlight players this week</span>
+                </li>
+                <li>
+                  <strong><%= upcomingEvent ? 'Live' : '24' %></strong>
+                  <span><%= upcomingEvent ? 'Event running now' : 'Matches logged nightly' %></span>
+                </li>
+              </ul>
             </div>
           </div>
 
@@ -166,6 +203,29 @@ events, and prove your skill with verified evidence.
             <h3>Profile Insights</h3>
             <p>Track wins, losses, and tier history on a personalized Minecraft player profile.</p>
           </article>
+        </div>
+      </section>
+
+      <section class="mc-section mc-section--comfort">
+        <div class="mc-container">
+          <header class="mc-section__header">
+            <h2 class="mc-heading">Thoughtful Quality-of-Life touches</h2>
+            <p class="mc-text-muted">Smooth navigation, subtle guidance, and always-on context make browsing the ladder effortless.</p>
+          </header>
+          <div class="mc-comfort-grid">
+            <article class="mc-comfort-card">
+              <h3>Scroll awareness</h3>
+              <p>A slim progress indicator and floating control let you zip back to the hero section without losing your place.</p>
+            </article>
+            <article class="mc-comfort-card">
+              <h3>Accessible journeys</h3>
+              <p>Improved skip links, keyboard hints, and shortcut toasts make RankTiers easier to navigate with a keyboard alone.</p>
+            </article>
+            <article class="mc-comfort-card">
+              <h3>Curated quick menu</h3>
+              <p>Summon the Shift + / menu to access the hottest ladders, submission forms, or policy docs in a single keystroke.</p>
+            </article>
+          </div>
         </div>
       </section>
     </main>
